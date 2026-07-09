@@ -1,0 +1,12 @@
+# RewriteCond %{SERVER_PORT} 80
+# RewriteRule ^(.*)$ https://rnvsports.co.in/$1 [R,L]
+# RewriteCond %{HTTP_HOST} ^www\.
+# RewriteRule ^(.*)$ https://rnvsports.co.in/$1 [R=301,L]
+
+RewriteEngine On
+ErrorDocument 404 /404.php
+RewriteRule ^blog/(.*)$ blog-details.php?blog=$1 [L]
+RewriteRule ^product/(.*)$ product_details2.php?product=$1 [L]
+RewriteRule ^category/(.*)$ category-product.php?category=$1 [L]
+RewriteRule ^brand/(.*)$ brand-product.php?brand=$1 [L]
+RewriteRule ^(.*).html$ $1.php [L]
