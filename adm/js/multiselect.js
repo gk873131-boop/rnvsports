@@ -1,4 +1,4 @@
-﻿//multiselect collection
+//multiselect collection
 window.multiselects = [];
 
 if (typeof ($) != 'undefined') {
