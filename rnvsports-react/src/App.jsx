@@ -18,6 +18,10 @@ const Search = lazy(() => import('./pages/Search'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const ReturnExchange = lazy(() => import('./pages/ReturnExchange'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogDetails = lazy(() => import('./pages/BlogDetails'));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
 
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -41,6 +45,10 @@ function App() {
                   <Route path="brand/:slug" element={<Shop />} />
                   <Route path="cart" element={<Cart />} />
                   <Route path="checkout" element={<Checkout />} />
+                  <Route path="order-success" element={<OrderSuccess />} />
+                  <Route path="wishlist" element={<Wishlist />} />
+                  <Route path="blog" element={<Blog />} />
+                  <Route path="blog/:slug" element={<BlogDetails />} />
                   <Route path="login" element={<Login />} />
                   <Route path="register" element={<Register />} />
                   <Route path="dashboard" element={<Dashboard />} />
