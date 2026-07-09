@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
@@ -5,20 +6,25 @@ import { useCart, useWishlist } from '../../context/Context';
 
 const ProductCard = ({ product }) => {
   const { addItem } = useCart();
-  const { addItem: addWishlist, removeItem: removeWishlist, isInWishlist } = useWishlist();
+  const { items, addItem: addWishlist, removeItem: removeWishlist, isInWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
+  const wishlistItem = items.find(i => i.product_id === product.id);
   const price = product.sale_price || product.regular_price;
   const discount = product.regular_price > price ? Math.round(((product.regular_price - price) / product.regular_price) * 100) : 0;
+  const [adding, setAdding] = useState(false);
 
   const handleCart = async (e) => {
     e.preventDefault();
+    if (adding) return;
+    setAdding(true);
     await addItem(product, { quantity: 1, price });
+    setAdding(false);
   };
 
   const handleWishlist = async (e) => {
     e.preventDefault();
-    if (inWishlist) {
-      const item = (await import('../../services/api')).wishlistService.getByUser?.();
+    if (inWishlist && wishlistItem) {
+      await removeWishlist(wishlistItem.id);
     } else {
       await addWishlist(product, price);
     }
