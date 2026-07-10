@@ -1,61 +1,90 @@
-import SEO from '../components/common/SEO'
-import { FiRefreshCw, FiPackage, FiTruck, FiCreditCard } from 'react-icons/fi'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { FiPackage, FiTruck, FiRefreshCw, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
 
-const ReturnExchange = () => {
+export default function ReturnExchange() {
   const steps = [
-    { icon: FiPackage, title: 'Request Return', desc: 'Contact us within 15 days of delivery' },
-    { icon: FiTruck, title: 'Ship the Product', desc: 'Pack in original packaging' },
-    { icon: FiCreditCard, title: 'Refund or Exchange', desc: 'Processed after inspection' }
-  ]
+    { icon: FiPackage, step: '01', title: 'Submit Request', desc: 'Contact us within 15 days of delivery via email or our contact form with your order number.' },
+    { icon: FiTruck,   step: '02', title: 'Ship the Item', desc: 'Pack the item in its original packaging and ship it to our address. Keep the tracking number.' },
+    { icon: FiRefreshCw, step: '03', title: 'Refund / Exchange', desc: 'Once we receive and inspect the item, we process your refund or exchange within 7–10 business days.' },
+  ];
+
+  const returnable = [
+    'Item must be unused and unworn',
+    'Original packaging and tags must be intact',
+    'Must be returned within 15 days of delivery',
+    'Include your order number in the return package',
+  ];
+
+  const notReturnable = [
+    'Worn, washed, or damaged items',
+    'Items without original tags',
+    'Products marked as "Final Sale"',
+    'Items returned after 15 days',
+  ];
 
   return (
     <>
-      <SEO title="Return & Exchange" />
-      <div className="bg-gray-100 py-4"><div className="container text-gray-600">Return & Exchange</div></div>
-      <section className="py-12 bg-white">
+      <SEO title="Return & Exchange" description="Learn about RNV Sports return and exchange policy." />
+      <div className="page-header">
         <div className="container">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FiRefreshCw className="w-8 h-8 text-[#ee7203]" />
-            </div>
-            <h1 className="text-3xl font-bold mb-4">Return & Exchange Policy</h1>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">We want you to be completely satisfied. If you're not happy with a product, you can return or exchange it within 15 days of delivery.</p>
+          <h1>Return & Exchange</h1>
+          <div className="breadcrumb" style={{ justifyContent: 'center' }}>
+            <Link to="/">Home</Link><span className="breadcrumb-sep">/</span><span>Returns</span>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            {steps.map((s, i) => (
-              <div key={i} className="bg-gray-50 rounded-lg p-6 text-center">
-                <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <s.icon className="w-7 h-7 text-[#ee7203]" />
+        </div>
+      </div>
+
+      <div className="section-sm">
+        <div className="container">
+          {/* Steps */}
+          <h2 className="section-title section-title-center">How It Works</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+            {steps.map(({ icon: Icon, step, title, desc }) => (
+              <div key={step} className="card" style={{ padding: '2rem', textAlign: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60, background: 'rgba(238,114,3,.1)', borderRadius: 'var(--radius-full)', margin: '0 auto 1rem' }}>
+                  <Icon size={24} color="var(--color-primary)" />
                 </div>
-                <h3 className="font-semibold mb-2">{s.title}</h3>
-                <p className="text-gray-600 text-sm">{s.desc}</p>
+                <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 800, color: 'var(--color-primary)', marginBottom: '.5rem', letterSpacing: '.1em' }}>STEP {step}</div>
+                <h3 style={{ fontWeight: 700, marginBottom: '.75rem' }}>{title}</h3>
+                <p style={{ color: 'var(--color-neutral-600)', fontSize: 'var(--font-size-sm)', lineHeight: 1.7 }}>{desc}</p>
               </div>
             ))}
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <div className="bg-green-50 rounded-lg p-6">
-              <h3 className="font-semibold text-green-800 mb-4">Conditions for Return</h3>
-              <ul className="space-y-2 text-green-700 text-sm">
-                <li>+ Product must be in original condition with all tags</li>
-                <li>+ Product should be unused and in original packaging</li>
-                <li>+ Return request within 15 days of delivery</li>
-                <li>+ Valid proof of purchase required</li>
-              </ul>
+
+          {/* Conditions */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+              <h3 style={{ fontWeight: 700, color: '#15803d', marginBottom: '1rem' }}>Conditions for Return</h3>
+              {returnable.map(c => (
+                <div key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', marginBottom: '.75rem' }}>
+                  <FiCheckCircle size={16} color="#15803d" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span style={{ fontSize: 'var(--font-size-sm)', color: '#166534' }}>{c}</span>
+                </div>
+              ))}
             </div>
-            <div className="bg-red-50 rounded-lg p-6">
-              <h3 className="font-semibold text-red-800 mb-4">Non-Returnable Items</h3>
-              <ul className="space-y-2 text-red-700 text-sm">
-                <li>x Products that have been used or installed</li>
-                <li>x Products without original packaging</li>
-                <li>x Customized or personalized items</li>
-                <li>x Products damaged due to misuse</li>
-              </ul>
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+              <h3 style={{ fontWeight: 700, color: '#991b1b', marginBottom: '1rem' }}>Non-Returnable Items</h3>
+              {notReturnable.map(c => (
+                <div key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', marginBottom: '.75rem' }}>
+                  <FiXCircle size={16} color="#991b1b" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span style={{ fontSize: 'var(--font-size-sm)', color: '#991b1b' }}>{c}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
-    </>
-  )
-}
 
-export default ReturnExchange
+          <div className="card" style={{ padding: '1.5rem', marginTop: '2rem', textAlign: 'center' }}>
+            <p style={{ color: 'var(--color-neutral-600)', marginBottom: '1rem' }}>
+              Have questions about a return or exchange?
+            </p>
+            <Link to="/contact" className="btn btn-primary">Contact Us</Link>
+          </div>
+        </div>
+      </div>
+
+      <style>{`@media(max-width:768px){div[style*="repeat(3, 1fr)"]{grid-template-columns:1fr!important}div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}`}</style>
+    </>
+  );
+}

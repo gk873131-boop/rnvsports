@@ -1,93 +1,135 @@
-import { useState } from 'react'
-import { FiMapPin, FiPhone, FiMail, FiClock } from 'react-icons/fi'
-import SEO from '../components/common/SEO'
-import { enquiryService } from '../services/services'
-import { validateEmail } from '../utils'
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FiMapPin, FiPhone, FiMail, FiClock, FiSend, FiCheckCircle } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
+import { enquiryService } from '../services/services';
+import { validateEmail } from '../utils';
 
-const Contact = () => {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
-  const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [error, setError] = useState('')
+export default function Contact() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [errors,   setErrors]   = useState({});
+  const [loading,  setLoading]  = useState(false);
+  const [success,  setSuccess]  = useState(false);
+  const [apiError, setApiError] = useState('');
+
+  const set = (f) => (e) => { setForm(p => ({ ...p, [f]: e.target.value })); setErrors(p => ({ ...p, [f]: '' })); };
+
+  const validate = () => {
+    const errs = {};
+    if (!form.name.trim())                        errs.name    = 'Required';
+    if (!form.email || !validateEmail(form.email)) errs.email   = 'Valid email required';
+    if (!form.message.trim())                     errs.message = 'Required';
+    setErrors(errs);
+    return !Object.keys(errs).length;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!validateEmail(form.email)) { setError('Please enter a valid email'); return }
-    setLoading(true)
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+    setApiError('');
     try {
-      await enquiryService.submitEnquiry(form)
-      setMsg('Thank you! We will get back to you soon.')
-      setForm({ name: '', email: '', subject: '', message: '' })
+      await enquiryService.submitEnquiry({ ...form, subject: form.subject || 'Contact Us' });
+      setSuccess(true);
+      setForm({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      setError(err.message || 'Failed to send message')
+      setApiError(err.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
-    setTimeout(() => { setMsg(''); setError('') }, 5000)
-  }
+  };
+
+  const INFO = [
+    { icon: FiMapPin, title: 'Address',        text: 'New Delhi, India' },
+    { icon: FiPhone,  title: 'Phone',           text: '+91 XXXXXXXXXX' },
+    { icon: FiMail,   title: 'Email',           text: 'info@rnvsports.co.in' },
+    { icon: FiClock,  title: 'Business Hours',  text: 'Mon – Sat: 9AM – 6PM IST' },
+  ];
 
   return (
     <>
-      <SEO title="Contact Us" description="Contact RNV Sports for any queries" />
-      <div className="bg-gray-100 py-4"><div className="container text-gray-600">Contact Us</div></div>
+      <SEO title="Contact Us" description="Get in touch with RNV Sports. We're here to help." />
 
-      <section className="py-16 bg-white">
+      <div className="page-header">
         <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-center mb-8">Get in Touch</h1>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-6">Send us a Message</h2>
-                  {msg && <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4">{msg}</div>}
-                  {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4">{error}</div>}
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Name *</label>
-                        <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#ee7203]" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Email *</label>
-                        <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#ee7203]" />
-                      </div>
+          <h1>Contact Us</h1>
+          <div className="breadcrumb" style={{ justifyContent: 'center' }}>
+            <Link to="/">Home</Link><span className="breadcrumb-sep">/</span><span>Contact</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="section-sm">
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'flex-start' }}>
+
+            {/* Info */}
+            <div>
+              <h2 className="section-title">Get In Touch</h2>
+              <p style={{ color: 'var(--color-neutral-600)', marginBottom: '2rem', lineHeight: 1.8 }}>
+                Have a question about our products or need assistance with your order? Our team is happy to help.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {INFO.map(({ icon: Icon, title, text }) => (
+                  <div key={title} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ width: 44, height: 44, background: 'rgba(238,114,3,.1)', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={18} color="var(--color-primary)" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Subject *</label>
-                      <input type="text" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#ee7203]" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Message *</label>
-                      <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required rows={4} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#ee7203]" />
-                    </div>
-                    <button type="submit" disabled={loading} className="w-full py-3 bg-[#ee7203] text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">{loading ? 'Sending...' : 'Send Message'}</button>
-                  </form>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {[
-                  { icon: FiMapPin, title: 'Visit Us', lines: ['C 3/14, Basement Floor', 'Rana Pratap Bagh, Delhi-110007'] },
-                  { icon: FiPhone, title: 'Call Us', lines: ['+91-9911820202'] },
-                  { icon: FiMail, title: 'Email Us', lines: ['hiralalsurgicals@gmail.com'] },
-                  { icon: FiClock, title: 'Hours', lines: ['Mon-Sat: 11:00 AM - 07:00 PM'] }
-                ].map((c, i) => (
-                  <div key={i} className="bg-gray-50 rounded-lg p-6 flex gap-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <c.icon className="text-[#ee7203] w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{c.title}</h3>
-                      {c.lines.map((l, j) => <p key={j} className="text-gray-600 text-sm">{l}</p>)}
+                      <p style={{ fontWeight: 700, fontSize: 'var(--font-size-sm)', marginBottom: '.25rem' }}>{title}</p>
+                      <p style={{ color: 'var(--color-neutral-600)', fontSize: 'var(--font-size-sm)' }}>{text}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Form */}
+            <div className="card" style={{ padding: '2rem' }}>
+              {success ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <FiCheckCircle size={48} color="var(--color-success)" style={{ marginBottom: '1rem' }} />
+                  <h3 style={{ fontWeight: 700, marginBottom: '.5rem' }}>Message Sent!</h3>
+                  <p style={{ color: 'var(--color-neutral-500)', marginBottom: '1.5rem', fontSize: 'var(--font-size-sm)' }}>
+                    We'll get back to you within 24 hours.
+                  </p>
+                  <button className="btn btn-primary" onClick={() => setSuccess(false)}>Send Another</button>
+                </div>
+              ) : (
+                <>
+                  <h3 style={{ fontWeight: 700, marginBottom: '1.5rem' }}>Send a Message</h3>
+                  {apiError && <div className="alert alert-error" style={{ marginBottom: '1rem' }}>{apiError}</div>}
+                  <form onSubmit={handleSubmit} noValidate>
+                    <div className="grid-2" style={{ marginBottom: '1rem' }}>
+                      {['name', 'email'].map(f => (
+                        <div key={f} className="form-group">
+                          <label className="form-label">{f === 'name' ? 'Full Name' : 'Email'} <span>*</span></label>
+                          <input className={`form-input${errors[f] ? ' error' : ''}`} type={f === 'email' ? 'email' : 'text'} value={form[f]} onChange={set(f)} />
+                          {errors[f] && <p className="form-error">{errors[f]}</p>}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Subject</label>
+                      <input className="form-input" value={form.subject} onChange={set('subject')} placeholder="Optional" />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                      <label className="form-label">Message <span>*</span></label>
+                      <textarea className={`form-textarea${errors.message ? ' error' : ''}`} value={form.message} onChange={set('message')} rows={5} placeholder="How can we help?" />
+                      {errors.message && <p className="form-error">{errors.message}</p>}
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                      <FiSend size={14} /> {loading ? 'Sending…' : 'Send Message'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </section>
-    </>
-  )
-}
+      </div>
 
-export default Contact
+      <style>{`@media(max-width:768px){div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}`}</style>
+    </>
+  );
+}

@@ -1,134 +1,221 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import SEO from '../components/common/SEO'
-import ProductCard from '../components/common/ProductCard'
-import LoadingSpinner from '../components/common/LoadingSpinner'
-import { productService, categoryService, brandService } from '../services/services'
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
+import ProductCard from '../components/common/ProductCard';
+import { ProductCardSkeleton } from '../components/common/LoadingSpinner';
+import EmptyState from '../components/common/EmptyState';
+import { productService, categoryService, brandService } from '../services/services';
+import { FiShoppingBag } from 'react-icons/fi';
 
-const Shop = () => {
-  const [params, setParams] = useSearchParams()
-  const [products, setProducts] = useState([])
-  const [categories, setCategories] = useState([])
-  const [brands, setBrands] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 1 })
+const SORT_OPTIONS = [
+  { value: '',           label: 'Default' },
+  { value: 'newest',     label: 'Newest' },
+  { value: 'price_asc',  label: 'Price: Low to High' },
+  { value: 'price_desc', label: 'Price: High to Low' },
+  { value: 'name_asc',   label: 'Name: A-Z' },
+];
 
-  const page = parseInt(params.get('page') || '1')
-  const sort = params.get('sort') || 'newest'
-  const categorySlug = params.get('category') || ''
-  const brandSlug = params.get('brand') || ''
-  const search = params.get('q') || ''
+export default function Shop() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [products,    setProducts]    = useState([]);
+  const [pagination,  setPagination]  = useState(null);
+  const [loading,     setLoading]     = useState(true);
+  const [categories,  setCategories]  = useState([]);
+  const [brands,      setBrands]      = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [priceRange,  setPriceRange]  = useState({ min: 0, max: 50000 });
+
+  const sort       = searchParams.get('sort')     || '';
+  const categoryId = searchParams.get('category') || '';
+  const brandId    = searchParams.get('brand')    || '';
+  const q          = searchParams.get('q')        || '';
+  const page       = parseInt(searchParams.get('page') || '1', 10);
+
+  const setParam = useCallback((key, val) => {
+    const next = new URLSearchParams(searchParams);
+    if (val) next.set(key, val); else next.delete(key);
+    next.delete('page');
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
+
+  const setPage = (p) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('page', p);
+    setSearchParams(next);
+  };
 
   useEffect(() => {
-    categoryService.getAll().then(res => setCategories(res.data || [])).catch(() => {})
-    brandService.getAll().then(res => setBrands(res.data || [])).catch(() => {})
-  }, [])
+    Promise.all([categoryService.getAll(), brandService.getAll()])
+      .then(([cRes, bRes]) => { setCategories(cRes.data || []); setBrands(bRes.data || []); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      try {
-        let res
-        if (categorySlug) {
-          res = await productService.getByCategory(categorySlug, { page, limit: 12 })
-        } else if (brandSlug) {
-          res = await productService.getByBrand(brandSlug)
-        } else {
-          res = await productService.getAll({ page, limit: 12, sort, search })
-        }
-        setProducts(res.data || [])
-        if (res.pagination) setPagination(res.pagination)
-      } catch (e) {
-        setProducts([])
-      }
-      setLoading(false)
-    }
-    load()
-  }, [page, sort, categorySlug, brandSlug, search])
+    setLoading(true);
+    const params = { page, limit: 12, sort, q };
+    if (categoryId) params.category_id = categoryId;
+    if (brandId)    params.brand_id    = brandId;
 
-  const updateParam = (key, value) => {
-    const newParams = new URLSearchParams(params)
-    if (value) newParams.set(key, value)
-    else newParams.delete(key)
-    setParams(newParams)
-  }
+    productService.getAll(params)
+      .then(r => { setProducts(r.data || []); setPagination(r.pagination || null); })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, [sort, categoryId, brandId, q, page]);
+
+  const clearFilters = () => setSearchParams({});
+
+  const hasFilters = sort || categoryId || brandId || q;
 
   return (
     <>
-      <SEO title="Shop" description="Browse all products at RNV Sports" />
-      <div className="bg-gray-100 py-4">
+      <SEO title="Shop" description="Browse all sports and gym products at RNV Sports." />
+
+      <div className="page-header">
         <div className="container">
-          <span className="text-gray-600">Home / Products</span>
+          <h1>All Products</h1>
+          <div className="breadcrumb" style={{ justifyContent: 'center' }}>
+            <Link to="/">Home</Link>
+            <span className="breadcrumb-sep">/</span>
+            <span>Shop</span>
+          </div>
         </div>
       </div>
 
-      <div className="container py-8">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <h3 className="font-semibold mb-4">Categories</h3>
-              <ul className="space-y-2 mb-6">
-                <li>
-                  <button onClick={() => updateParam('category', '')} className={`text-sm ${!categorySlug ? 'text-[#ee7203] font-medium' : 'text-gray-600 hover:text-[#ee7203]'}`}>All</button>
-                </li>
-                {categories.map(c => (
-                  <li key={c.category_id}>
-                    <button onClick={() => updateParam('category', c.category_slug)} className={`text-sm ${categorySlug === c.category_slug ? 'text-[#ee7203] font-medium' : 'text-gray-600 hover:text-[#ee7203]'}`}>{c.category_name}</button>
-                  </li>
-                ))}
-              </ul>
+      <div className="section-sm">
+        <div className="container">
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
 
-              <h3 className="font-semibold mb-4">Brands</h3>
-              <ul className="space-y-2">
-                <li>
-                  <button onClick={() => updateParam('brand', '')} className={`text-sm ${!brandSlug ? 'text-[#ee7203] font-medium' : 'text-gray-600 hover:text-[#ee7203]'}`}>All</button>
-                </li>
-                {brands.map(b => (
-                  <li key={b.id}>
-                    <button onClick={() => updateParam('brand', b.slug)} className={`text-sm ${brandSlug === b.slug ? 'text-[#ee7203] font-medium' : 'text-gray-600 hover:text-[#ee7203]'}`}>{b.title}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-
-          {/* Products */}
-          <main className="flex-1">
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
-              <span className="text-gray-500">{pagination.total || products.length} products</span>
-              <select value={sort} onChange={(e) => updateParam('sort', e.target.value)} className="px-4 py-2 border rounded-lg focus:outline-none focus:border-[#ee7203]">
-                <option value="newest">Newest</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="name_asc">Name A-Z</option>
-                <option value="name_desc">Name Z-A</option>
-              </select>
-            </div>
-
-            {loading ? (
-              <LoadingSpinner className="py-16" />
-            ) : products.length > 0 ? (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                  {products.map(p => <ProductCard key={p.product_id} product={p} />)}
+            {/* Sidebar */}
+            <aside className="filter-sidebar" style={{ display: sidebarOpen ? 'block' : undefined }}>
+              <div style={{ position: 'sticky', top: 80 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                  <h3 style={{ fontWeight: 700, fontSize: 'var(--font-size-base)' }}>Filters</h3>
+                  {hasFilters && (
+                    <button onClick={clearFilters} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-primary)', fontWeight: 600 }}>
+                      Clear all
+                    </button>
+                  )}
                 </div>
-                {pagination.totalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-8">
-                    <button disabled={page <= 1} onClick={() => updateParam('page', String(page - 1))} className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50">Prev</button>
-                    <span className="px-4 py-2 text-gray-600">Page {page} of {pagination.totalPages}</span>
-                    <button disabled={page >= pagination.totalPages} onClick={() => updateParam('page', String(page + 1))} className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50">Next</button>
+
+                {/* Categories */}
+                <div className="filter-group">
+                  <div className="filter-group-title">Category</div>
+                  <div>
+                    <button className={`filter-chip${!categoryId ? ' active' : ''}`} onClick={() => setParam('category', '')}>All</button>
+                    {categories.map(cat => (
+                      <button
+                        key={cat.category_id}
+                        className={`filter-chip${categoryId === String(cat.category_id) ? ' active' : ''}`}
+                        onClick={() => setParam('category', categoryId === String(cat.category_id) ? '' : cat.category_id)}
+                      >
+                        {cat.category_name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Brands */}
+                {brands.length > 0 && (
+                  <div className="filter-group">
+                    <div className="filter-group-title">Brand</div>
+                    <div>
+                      {brands.map(b => (
+                        <button
+                          key={b.id}
+                          className={`filter-chip${brandId === String(b.id) ? ' active' : ''}`}
+                          onClick={() => setParam('brand', brandId === String(b.id) ? '' : b.id)}
+                        >
+                          {b.title}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </>
-            ) : (
-              <div className="text-center py-12 text-gray-500">No products found</div>
-            )}
-          </main>
+              </div>
+            </aside>
+
+            {/* Main */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Toolbar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-500)' }}>
+                  {pagination ? `${pagination.total} product${pagination.total !== 1 ? 's' : ''}` : ''}
+                  {q && <span> for "<strong>{q}</strong>"</span>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <select
+                    className="form-select"
+                    style={{ width: 'auto', fontSize: 'var(--font-size-sm)' }}
+                    value={sort}
+                    onChange={e => setParam('sort', e.target.value)}
+                  >
+                    {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Active filters */}
+              {hasFilters && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {q && (
+                    <span className="badge badge-hot" style={{ cursor: 'pointer' }} onClick={() => setParam('q', '')}>
+                      "{q}" <FiX size={11} style={{ display: 'inline', marginLeft: 3 }} />
+                    </span>
+                  )}
+                  {categoryId && (
+                    <span className="badge badge-new" style={{ cursor: 'pointer' }} onClick={() => setParam('category', '')}>
+                      {categories.find(c => String(c.category_id) === categoryId)?.category_name} <FiX size={11} style={{ display: 'inline', marginLeft: 3 }} />
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Products grid */}
+              <div className="products-grid">
+                {loading
+                  ? Array.from({ length: 12 }).map((_, i) => <ProductCardSkeleton key={i} />)
+                  : products.map(p => <ProductCard key={p.product_id} product={p} />)
+                }
+              </div>
+
+              {!loading && !products.length && (
+                <EmptyState
+                  icon={FiShoppingBag}
+                  title="No products found"
+                  description="Try adjusting your filters or search query."
+                  actionLabel="Clear Filters"
+                  onAction={clearFilters}
+                />
+              )}
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="pagination">
+                  <button className="page-btn" onClick={() => setPage(page - 1)} disabled={page <= 1}>‹</button>
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - page) <= 2)
+                    .map((p, i, arr) => (
+                      <React.Fragment key={p}>
+                        {i > 0 && arr[i - 1] !== p - 1 && <span style={{ padding: '0 4px', color: 'var(--color-neutral-300)' }}>…</span>}
+                        <button className={`page-btn${p === page ? ' active' : ''}`} onClick={() => setPage(p)}>{p}</button>
+                      </React.Fragment>
+                    ))
+                  }
+                  <button className="page-btn" onClick={() => setPage(page + 1)} disabled={page >= pagination.totalPages}>›</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </>
-  )
-}
 
-export default Shop
+      <style>{`
+        @media (max-width: 768px) {
+          .filter-sidebar { display: none; }
+        }
+      `}</style>
+    </>
+  );
+}

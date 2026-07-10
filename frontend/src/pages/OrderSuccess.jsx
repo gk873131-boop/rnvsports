@@ -1,45 +1,40 @@
-import { useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { FiCheck, FiPackage, FiHome } from 'react-icons/fi'
-import SEO from '../components/common/SEO'
-import { useCart } from '../context/Context'
+import React from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { FiCheckCircle } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
+import { useCart } from '../context/Context';
 
-const OrderSuccess = () => {
-  const [params] = useSearchParams()
-  const orderNo = params.get('order') || ''
-  const { clearCart } = useCart()
+export default function OrderSuccess() {
+  const [searchParams] = useSearchParams();
+  const orderNo = searchParams.get('order') || '';
+  const { clearCart } = useCart();
 
-  useEffect(() => { clearCart() }, [])
+  React.useEffect(() => { clearCart(); }, []);
 
   return (
     <>
-      <SEO title="Order Success" />
-      <div className="min-h-[60vh] flex items-center justify-center py-16">
-        <div className="container max-w-lg mx-auto text-center">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <FiCheck className="w-12 h-12 text-green-600" />
+      <SEO title="Order Confirmed" />
+      <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: 480 }}>
+          <div style={{ width: 88, height: 88, borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <FiCheckCircle size={44} color="var(--color-success)" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Order Placed Successfully!</h1>
-          <p className="text-gray-600 mb-6">Thank you for your purchase. Your order has been confirmed and will be shipped soon.</p>
+          <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 800, marginBottom: '.5rem' }}>Order Confirmed!</h1>
+          <p style={{ color: 'var(--color-neutral-500)', marginBottom: '1.5rem', lineHeight: 1.7 }}>
+            Thank you for shopping with RNV Sports. Your order has been placed successfully.
+          </p>
           {orderNo && (
-            <div className="bg-gray-100 rounded-lg p-4 mb-8">
-              <p className="text-sm text-gray-500 mb-1">Order Number</p>
-              <p className="text-xl font-bold text-[#ee7203]">{orderNo}</p>
+            <div style={{ background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-md)', padding: '1rem 1.5rem', marginBottom: '2rem', display: 'inline-block' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-500)' }}>Order Number</span>
+              <p style={{ fontWeight: 800, fontSize: 'var(--font-size-lg)', color: 'var(--color-primary)' }}>{orderNo}</p>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#ee7203] text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
-              <FiPackage /> View Orders
-            </Link>
-            <Link to="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
-              <FiHome /> Continue Shopping
-            </Link>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/dashboard?tab=orders" className="btn btn-primary btn-lg">View My Orders</Link>
+            <Link to="/shop" className="btn btn-ghost btn-lg">Continue Shopping</Link>
           </div>
-          <p className="text-sm text-gray-500 mt-8">A confirmation email has been sent to your registered email address.</p>
         </div>
       </div>
     </>
-  )
+  );
 }
-
-export default OrderSuccess

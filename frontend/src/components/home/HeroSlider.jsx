@@ -1,93 +1,137 @@
-import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
-import { bannerService } from '../../services/services'
-import { getImageUrl } from '../../utils'
-import ProductCard from '../common/ProductCard'
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { bannerService } from '../../services/services';
+import { getImageUrl } from '../../utils';
+import ProductCard from '../common/ProductCard';
+import { ProductCardSkeleton } from '../common/LoadingSpinner';
 
-const HeroSlider = () => {
-  const [banners, setBanners] = useState([])
-  const [index, setIndex] = useState(0)
-  const timerRef = useRef(null)
+const FALLBACK_SLIDES = [
+  {
+    id: 1,
+    name: 'Premium Sports Equipment',
+    image: 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=1400',
+    subtitle: 'Train harder. Recover faster. Perform better.',
+  },
+  {
+    id: 2,
+    name: 'Professional Gym Gear',
+    image: 'https://images.pexels.com/photos/1552249/pexels-photo-1552249.jpeg?auto=compress&w=1400',
+    subtitle: 'World-class equipment for serious athletes.',
+  },
+  {
+    id: 3,
+    name: 'Sports Supports & Braces',
+    image: 'https://images.pexels.com/photos/4397840/pexels-photo-4397840.jpeg?auto=compress&w=1400',
+    subtitle: 'Protect your joints. Stay in the game.',
+  },
+];
+
+export function HeroSlider() {
+  const [slides,  setSlides]  = useState([]);
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await bannerService.getHomeBanners()
-        setBanners(res.data?.length > 0 ? res.data : [{ banner_id: 1, name: 'Welcome to RNV Sports', image: 'https://images.unsplash.com/photo-1534438327276-142e2bae6874?w=1920&h=600&fit=crop' }])
-      } catch {
-        setBanners([{ banner_id: 1, name: 'Welcome to RNV Sports', image: 'https://images.unsplash.com/photo-1534438327276-142e2bae6874?w=1920&h=600&fit=crop' }])
-      }
-    }
-    load()
-  }, [])
+    bannerService.getHomeBanners()
+      .then(r => {
+        const data = r.data || [];
+        setSlides(data.length ? data : FALLBACK_SLIDES);
+      })
+      .catch(() => setSlides(FALLBACK_SLIDES));
+  }, []);
+
+  const prev = useCallback(() => setCurrent(c => (c === 0 ? slides.length - 1 : c - 1)), [slides.length]);
+  const next = useCallback(() => setCurrent(c => (c === slides.length - 1 ? 0 : c + 1)), [slides.length]);
 
   useEffect(() => {
-    if (banners.length <= 1) return
-    timerRef.current = setInterval(() => setIndex(i => (i + 1) % banners.length), 5000)
-    return () => clearInterval(timerRef.current)
-  }, [banners.length])
+    if (slides.length < 2) return;
+    const t = setInterval(next, 5000);
+    return () => clearInterval(t);
+  }, [next, slides.length]);
 
-  if (!banners.length) return <div className="w-full h-[400px] bg-gray-100 animate-pulse" />
+  if (!slides.length) return <div className="hero-slider" />;
+
+  const getSlideImage = (s) => {
+    if (s.image && s.image.startsWith('http')) return s.image;
+    return getImageUrl(s.image);
+  };
 
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
-      <img src={getImageUrl(banners[index].image) || banners[index].image} alt={banners[index].name} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
-      <div className="absolute inset-0 flex items-center">
-        <div className="container">
-          <div className="max-w-xl text-white">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">{banners[index].name}</h2>
-            <p className="text-lg mb-6 text-gray-200">Premium sports and fitness equipment</p>
-            <Link to="/shop" className="inline-block px-6 py-3 bg-[#ee7203] text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">Shop Now</Link>
+    <div className="hero-slider">
+      {slides.map((slide, i) => (
+        <div key={slide.id || i} className={`hero-slide${i === current ? ' active' : ''}`}>
+          <img
+            src={getSlideImage(slide)}
+            alt={slide.name || `Slide ${i + 1}`}
+            loading={i === 0 ? 'eager' : 'lazy'}
+          />
+          <div className="hero-overlay">
+            <div className="container">
+              <div className="hero-content">
+                <h1>{slide.name || 'Premium Sports Equipment'}</h1>
+                {slide.subtitle && <p>{slide.subtitle}</p>}
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <Link to="/shop" className="btn btn-primary btn-lg">Shop Now</Link>
+                  <Link to="/about" className="btn btn-outline btn-lg" style={{ borderColor: '#fff', color: '#fff' }}>Learn More</Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      {banners.length > 1 && (
+      ))}
+
+      {slides.length > 1 && (
         <>
-          <button onClick={() => setIndex(i => (i - 1 + banners.length) % banners.length)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"><FiChevronLeft /></button>
-          <button onClick={() => setIndex(i => (i + 1) % banners.length)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"><FiChevronRight /></button>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {banners.map((_, i) => (
-              <button key={i} onClick={() => setIndex(i)} className={`w-3 h-3 rounded-full transition-colors ${i === index ? 'bg-[#ee7203]' : 'bg-white/50'}`} />
+          <button className="hero-arrow hero-arrow-left" onClick={prev} aria-label="Previous slide">
+            <FiChevronLeft size={20} />
+          </button>
+          <button className="hero-arrow hero-arrow-right" onClick={next} aria-label="Next slide">
+            <FiChevronRight size={20} />
+          </button>
+          <div className="hero-dots">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                className={`hero-dot${i === current ? ' active' : ''}`}
+                onClick={() => setCurrent(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
             ))}
           </div>
         </>
       )}
     </div>
-  )
+  );
 }
 
-const ProductSection = ({ title, fetchFn }) => {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+export function ProductSection({ title, fetchFn, viewAllLink = '/shop' }) {
+  const [products, setProducts] = useState([]);
+  const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
-    fetchFn().then(res => setProducts(res.data || [])).catch(() => {}).finally(() => setLoading(false))
-  }, [fetchFn])
+    fetchFn()
+      .then(r => setProducts(r.data || []))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, [fetchFn]);
 
   return (
-    <section className="py-12">
+    <div className="section">
       <div className="container">
-        <h2 className="section-title">{title}</h2>
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 aspect-square rounded-lg mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {products.map(p => <ProductCard key={p.product_id} product={p} />)}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <h2 className="section-title" style={{ marginBottom: 0 }}>{title}</h2>
+          <Link to={viewAllLink} className="btn btn-ghost btn-sm">View All</Link>
+        </div>
+        <div className="products-grid">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+            : products.slice(0, 8).map(p => <ProductCard key={p.product_id} product={p} />)
+          }
+        </div>
+        {!loading && !products.length && (
+          <p style={{ textAlign: 'center', color: 'var(--color-neutral-400)', padding: '2rem' }}>No products found.</p>
         )}
       </div>
-    </section>
-  )
+    </div>
+  );
 }
-
-export { HeroSlider, ProductSection }

@@ -1,48 +1,78 @@
-export const formatPrice = (price) => {
-  if (price === null || price === undefined) return '0'
-  return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(price)
+const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
+
+export function formatPrice(amount) {
+  if (amount === null || amount === undefined) return '₹0';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
-export const calculateDiscount = (regularPrice, salePrice) => {
-  if (!regularPrice || regularPrice <= 0) return 0
-  const price = salePrice || regularPrice
-  if (price >= regularPrice) return 0
-  return Math.round(((regularPrice - price) / regularPrice) * 100)
+export function calculateDiscount(regular, sale) {
+  if (!regular || !sale || regular <= 0) return 0;
+  return Math.round(((regular - sale) / regular) * 100);
 }
 
-export const truncateText = (text, maxLength = 50) => {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength).trim() + '...'
+export function truncateText(text, maxLength = 80) {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength).trimEnd() + '...';
 }
 
-export const slugify = (text) => {
-  return text.toString().toLowerCase().trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
+export function slugify(str) {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '').replace(/-+/g, '-');
 }
 
-export const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-
-export const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone)
-
-export const validatePincode = (pincode) => /^[1-9][0-9]{5}$/.test(pincode)
-
-export const getImageUrl = (path, fallback = null) => {
-  if (!path) return fallback
-  if (path.startsWith('http')) return path
-  const baseUrl = (import.meta.env.VITE_API_URL || '').replace('/api', '')
-  return `${baseUrl}/uploads/${path}`
+export function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export const formatDate = (dateString, options = {}) => {
-  if (!dateString) return ''
-  return new Date(dateString).toLocaleDateString('en-IN', {
-    year: 'numeric', month: 'short', day: 'numeric', ...options,
-  })
+export function validatePhone(phone) {
+  return /^[6-9]\d{9}$/.test(phone.replace(/\s/g, ''));
 }
 
-export const getShippingCost = (subtotal, threshold = 500) => subtotal >= threshold ? 0 : 50
+export function validatePincode(pin) {
+  return /^\d{6}$/.test(pin);
+}
 
-export const classNames = (...classes) => classes.filter(Boolean).join(' ')
+export function getImageUrl(filename) {
+  if (!filename) return `${BASE_URL}/uploads/placeholder.jpg`;
+  if (filename.startsWith('http')) return filename;
+  return `${BASE_URL}/uploads/${filename}`;
+}
+
+export function formatDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    return new Intl.DateTimeFormat('en-IN', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    }).format(new Date(dateStr));
+  } catch { return dateStr; }
+}
+
+export function getShippingCost(subtotal) {
+  return subtotal >= 500 ? 0 : 50;
+}
+
+export function classNames(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
+export function getOrderStatusClass(status) {
+  const map = {
+    Pending:    'status-pending',
+    Processing: 'status-processing',
+    Dispatched: 'status-dispatched',
+    Delivered:  'status-delivered',
+    Cancelled:  'status-cancelled',
+  };
+  return map[status] || 'status-pending';
+}
+
+export function stripHtml(html) {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+}

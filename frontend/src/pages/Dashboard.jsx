@@ -1,144 +1,303 @@
-import { useState, useEffect } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { FiUser, FiPackage, FiSettings, FiLogOut } from 'react-icons/fi'
-import SEO from '../components/common/SEO'
-import LoadingSpinner from '../components/common/LoadingSpinner'
-import { useAuth } from '../context/Context'
-import { orderService } from '../services/services'
-import { formatPrice, formatDate } from '../utils'
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { FiUser, FiPackage, FiSettings, FiLogOut, FiEdit2, FiSave } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useAuth } from '../context/Context';
+import { orderService, userService } from '../services/services';
+import { formatPrice, formatDate, getOrderStatusClass } from '../utils';
 
-const Dashboard = () => {
-  const { user, profile, logout, updateProfile, isAuthenticated, loading } = useAuth()
-  const [orders, setOrders] = useState([])
-  const [tab, setTab] = useState('profile')
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', address: '', city: '', state: '', pincode: '' })
-  const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState('')
+const INDIA_STATES = [
+  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana',
+  'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur',
+  'Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
+  'Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh'
+];
+
+export default function Dashboard() {
+  const { isAuthenticated, profile, logout, refreshProfile } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'profile';
+
+  const [tab,    setTab]    = useState(initialTab);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', mobile: '', address1: '', city: '', state: '', pincode: '' });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg,    setProfileMsg]    = useState('');
+
+  const [pwdForm, setPwdForm] = useState({ oldPassword: '', newPassword: '', confirm: '' });
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdMsg,     setPwdMsg]     = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    if (!isAuthenticated) navigate('/login?redirect=/dashboard');
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     if (profile) {
-      setForm({
-        firstName: profile.customer_fname || '', lastName: profile.customer_lname || '',
-        phone: profile.customer_mobile || '', address: profile.customer_address1 || '',
-        city: profile.customer_city || '', state: profile.customer_state || '',
-        pincode: profile.customer_pincode || ''
-      })
+      setProfileForm({
+        firstName: profile.customer_fname || '',
+        lastName:  profile.customer_lname || '',
+        mobile:    profile.customer_mobile || '',
+        address1:  profile.customer_address1 || '',
+        city:      profile.customer_city || '',
+        state:     profile.customer_state || '',
+        pincode:   profile.customer_pincode || '',
+      });
     }
-  }, [profile])
+  }, [profile]);
 
   useEffect(() => {
-    if (isAuthenticated) orderService.getOrders().then(res => setOrders(res.data || [])).catch(() => {})
-  }, [isAuthenticated])
-
-  if (loading) return <LoadingSpinner className="min-h-[60vh]" />
-  if (!isAuthenticated) return <Navigate to="/login?redirect=/dashboard" replace />
-
-  const handleSave = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await updateProfile({
-        firstName: form.firstName, lastName: form.lastName, mobile: form.phone,
-        address1: form.address, city: form.city, state: form.state, pincode: form.pincode,
-      })
-      setMsg('Profile updated successfully!')
-      setTimeout(() => setMsg(''), 3000)
-    } catch (err) {
-      setMsg('Failed to update profile')
+    if (tab === 'orders' && isAuthenticated) {
+      setOrdersLoading(true);
+      orderService.getMyOrders()
+        .then(r => setOrders(r.data || []))
+        .catch(() => setOrders([]))
+        .finally(() => setOrdersLoading(false));
     }
-    setSaving(false)
-  }
+  }, [tab, isAuthenticated]);
+
+  const setP = (f) => (e) => setProfileForm(p => ({ ...p, [f]: e.target.value }));
+
+  const saveProfile = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileMsg('');
+    try {
+      await userService.updateProfile(profileForm);
+      await refreshProfile();
+      setProfileMsg('Profile updated successfully!');
+    } catch (err) {
+      setProfileMsg(err.message || 'Update failed');
+    } finally {
+      setProfileSaving(false);
+      setTimeout(() => setProfileMsg(''), 4000);
+    }
+  };
+
+  const changePassword = async (e) => {
+    e.preventDefault();
+    if (pwdForm.newPassword !== pwdForm.confirm) {
+      setPwdMsg({ type: 'error', text: 'Passwords do not match' }); return;
+    }
+    if (pwdForm.newPassword.length < 6) {
+      setPwdMsg({ type: 'error', text: 'Min. 6 characters' }); return;
+    }
+    setPwdLoading(true);
+    setPwdMsg({ type: '', text: '' });
+    try {
+      await userService.changePassword({ oldPassword: pwdForm.oldPassword, newPassword: pwdForm.newPassword });
+      setPwdMsg({ type: 'success', text: 'Password changed!' });
+      setPwdForm({ oldPassword: '', newPassword: '', confirm: '' });
+    } catch (err) {
+      setPwdMsg({ type: 'error', text: err.message || 'Failed to change password' });
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  if (!isAuthenticated) return null;
+
+  const initials = profile ? `${profile.customer_fname?.[0] || ''}${profile.customer_lname?.[0] || ''}`.toUpperCase() : '?';
+
+  const navItems = [
+    { id: 'profile', icon: FiUser,    label: 'Profile' },
+    { id: 'orders',  icon: FiPackage, label: 'My Orders' },
+    { id: 'settings',icon: FiSettings,label: 'Settings' },
+  ];
 
   return (
     <>
-      <SEO title="Dashboard" />
-      <div className="bg-gray-100 py-4"><div className="container text-gray-600">Dashboard</div></div>
+      <SEO title="My Dashboard" />
+      <div className="page-header">
+        <div className="container">
+          <h1>My Account</h1>
+          <div className="breadcrumb" style={{ justifyContent: 'center' }}>
+            <Link to="/">Home</Link><span className="breadcrumb-sep">/</span><span>Dashboard</span>
+          </div>
+        </div>
+      </div>
 
-      <div className="container py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          <aside className="bg-white rounded-lg shadow-sm p-6">
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-[#ee7203]">
-                {(profile?.customer_fname?.[0] || 'U').toUpperCase()}
+      <div className="section-sm">
+        <div className="container">
+          <div className="dashboard-layout">
+            {/* Sidebar */}
+            <aside className="dashboard-sidebar">
+              <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <div className="dashboard-avatar">{initials}</div>
+                <p style={{ fontWeight: 700, fontSize: 'var(--font-size-base)' }}>
+                  {profile?.customer_fname} {profile?.customer_lname}
+                </p>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-400)', marginBottom: '1rem' }}>
+                  {profile?.customer_email}
+                </p>
+                <hr className="divider" style={{ margin: '0 0 1rem' }} />
+                <nav>
+                  {navItems.map(({ id, icon: Icon, label }) => (
+                    <button
+                      key={id}
+                      className={`dashboard-nav-item${tab === id ? ' active' : ''}`}
+                      style={{ width: '100%' }}
+                      onClick={() => setTab(id)}
+                    >
+                      <Icon size={16} /> {label}
+                    </button>
+                  ))}
+                  <button
+                    className="dashboard-nav-item"
+                    style={{ width: '100%', color: 'var(--color-error)' }}
+                    onClick={() => { logout(); navigate('/'); }}
+                  >
+                    <FiLogOut size={16} /> Sign Out
+                  </button>
+                </nav>
               </div>
-              <h3 className="font-semibold">{profile?.customer_fname} {profile?.customer_lname}</h3>
-              <p className="text-sm text-gray-500">{profile?.customer_email}</p>
-            </div>
-            <nav className="space-y-1">
-              {[
-                { id: 'profile', icon: FiUser, label: 'Profile' },
-                { id: 'orders', icon: FiPackage, label: 'Orders' },
-                { id: 'settings', icon: FiSettings, label: 'Settings' }
-              ].map(t => (
-                <button key={t.id} onClick={() => setTab(t.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${tab === t.id ? 'bg-[#ee7203] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  <t.icon className="w-5 h-5" /><span>{t.label}</span>
-                </button>
-              ))}
-              <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100">
-                <FiLogOut className="w-5 h-5" /><span>Sign Out</span>
-              </button>
-            </nav>
-          </aside>
+            </aside>
 
-          <main className="lg:col-span-3">
-            {tab === 'profile' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">My Profile</h2>
-                {msg && <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4">{msg}</div>}
-                <form onSubmit={handleSave} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
+            {/* Content */}
+            <div className="dashboard-content">
+              {/* Profile tab */}
+              {tab === 'profile' && (
+                <div className="card" style={{ padding: '1.75rem' }}>
+                  <h2 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: 'var(--font-size-xl)' }}>
+                    <FiUser style={{ display: 'inline', marginRight: 8 }} />Profile Information
+                  </h2>
+                  {profileMsg && (
+                    <div className={`alert ${profileMsg.includes('success') ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '1rem' }}>
+                      {profileMsg}
+                    </div>
+                  )}
+                  <form onSubmit={saveProfile}>
+                    <div className="grid-2" style={{ marginBottom: '1rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">First Name</label>
+                        <input className="form-input" value={profileForm.firstName} onChange={setP('firstName')} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Last Name</label>
+                        <input className="form-input" value={profileForm.lastName} onChange={setP('lastName')} />
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Mobile</label>
+                      <input className="form-input" type="tel" value={profileForm.mobile} onChange={setP('mobile')} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Address</label>
+                      <input className="form-input" value={profileForm.address1} onChange={setP('address1')} />
+                    </div>
+                    <div className="grid-2" style={{ marginBottom: '1rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">City</label>
+                        <input className="form-input" value={profileForm.city} onChange={setP('city')} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">State</label>
+                        <select className="form-select" value={profileForm.state} onChange={setP('state')}>
+                          <option value="">Select</option>
+                          {INDIA_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                      <label className="form-label">Pincode</label>
+                      <input className="form-input" style={{ maxWidth: 180 }} value={profileForm.pincode} onChange={setP('pincode')} />
+                    </div>
+                    <button type="submit" className="btn btn-primary" disabled={profileSaving}>
+                      <FiSave size={15} /> {profileSaving ? 'Saving…' : 'Save Changes'}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Orders tab */}
+              {tab === 'orders' && (
+                <div className="card" style={{ padding: '1.75rem' }}>
+                  <h2 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: 'var(--font-size-xl)' }}>
+                    <FiPackage style={{ display: 'inline', marginRight: 8 }} />My Orders
+                  </h2>
+                  {ordersLoading ? <LoadingSpinner centered /> : orders.length === 0 ? (
+                    <div className="empty-state">
+                      <FiPackage style={{ fontSize: '3rem', color: 'var(--color-neutral-300)' }} />
+                      <p className="empty-title">No orders yet</p>
+                      <Link to="/shop" className="btn btn-primary">Start Shopping</Link>
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--color-neutral-50)' }}>
+                            {['Order #', 'Date', 'Total', 'Status', 'Payment'].map(h => (
+                              <th key={h} style={{ padding: '.75rem 1rem', textAlign: 'left', fontWeight: 700, fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--color-neutral-500)', borderBottom: '1px solid var(--color-neutral-100)' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orders.map(order => (
+                            <tr key={order.order_no}>
+                              <td style={{ padding: '.875rem 1rem', fontWeight: 600, fontSize: 'var(--font-size-sm)', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                                {order.order_no}
+                              </td>
+                              <td style={{ padding: '.875rem 1rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                                {formatDate(order.date)}
+                              </td>
+                              <td style={{ padding: '.875rem 1rem', fontWeight: 700, fontSize: 'var(--font-size-sm)', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                                {formatPrice(order.grand_total || order.total_amt)}
+                              </td>
+                              <td style={{ padding: '.875rem 1rem', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                                <span className={`status-badge ${getOrderStatusClass(order.order_status)}`}>
+                                  {order.order_status}
+                                </span>
+                              </td>
+                              <td style={{ padding: '.875rem 1rem', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                                <span className={`status-badge ${order.payment_status == 1 ? 'status-delivered' : 'status-pending'}`}>
+                                  {order.payment_status == 1 ? 'Paid' : 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Settings tab */}
+              {tab === 'settings' && (
+                <div className="card" style={{ padding: '1.75rem' }}>
+                  <h2 style={{ fontWeight: 700, marginBottom: '1.5rem', fontSize: 'var(--font-size-xl)' }}>
+                    <FiSettings style={{ display: 'inline', marginRight: 8 }} />Change Password
+                  </h2>
+                  {pwdMsg.text && (
+                    <div className={`alert ${pwdMsg.type === 'success' ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '1rem' }}>
+                      {pwdMsg.text}
+                    </div>
+                  )}
+                  <form onSubmit={changePassword} style={{ maxWidth: 400 }}>
                     {[
-                      { name: 'firstName', label: 'First Name' }, { name: 'lastName', label: 'Last Name' },
-                      { name: 'phone', label: 'Phone' }, { name: 'city', label: 'City' },
-                      { name: 'state', label: 'State' }, { name: 'pincode', label: 'Pincode' },
-                      { name: 'address', label: 'Address', full: true }
-                    ].map(({ name, label, full }) => (
-                      <div key={name} className={full ? 'sm:col-span-2' : ''}>
-                        <label className="block text-sm font-medium mb-1">{label}</label>
-                        <input type="text" value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#ee7203]" />
+                      { f: 'oldPassword', l: 'Current Password' },
+                      { f: 'newPassword', l: 'New Password' },
+                      { f: 'confirm',     l: 'Confirm New Password' },
+                    ].map(({ f, l }) => (
+                      <div key={f} className="form-group" style={{ marginBottom: '1rem' }}>
+                        <label className="form-label">{l}</label>
+                        <input className="form-input" type="password" value={pwdForm[f]} onChange={e => setPwdForm(p => ({ ...p, [f]: e.target.value }))} />
                       </div>
                     ))}
-                  </div>
-                  <button type="submit" disabled={saving} className="px-6 py-2 bg-[#ee7203] text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
-                </form>
-              </div>
-            )}
-
-            {tab === 'orders' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">My Orders</h2>
-                {orders.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No orders yet. <Link to="/shop" className="text-[#ee7203]">Start shopping</Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {orders.map(o => (
-                      <div key={o.order_no} className="border rounded-lg p-4">
-                        <div className="flex justify-between mb-2">
-                          <span className="font-semibold">Order #{o.order_no}</span>
-                          <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700">{o.order_status}</span>
-                        </div>
-                        <p className="text-gray-600 text-sm">{formatDate(o.date || o.created_at)}</p>
-                        <p className="font-semibold text-[#ee7203]">₹{formatPrice(o.total_amt)}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {tab === 'settings' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
-                <p className="text-gray-600">Change password functionality will be available soon.</p>
-              </div>
-            )}
-          </main>
+                    <button type="submit" className="btn btn-primary" disabled={pwdLoading}>
+                      {pwdLoading ? 'Updating…' : 'Update Password'}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>
-  )
+  );
 }
-
-export default Dashboard

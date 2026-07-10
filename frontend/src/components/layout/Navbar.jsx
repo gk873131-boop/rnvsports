@@ -1,149 +1,299 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { FiSearch, FiShoppingCart, FiHeart, FiUser, FiMenu, FiX, FiPhone, FiChevronDown } from 'react-icons/fi'
-import { useAuth, useCart, useWishlist } from '../../context/Context'
-import { categoryService } from '../../services/services'
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import {
+  FiSearch, FiShoppingCart, FiHeart, FiUser, FiMenu, FiX,
+  FiChevronDown, FiLogOut, FiGrid, FiPackage
+} from 'react-icons/fi';
+import { useAuth }     from '../../context/Context';
+import { useCart }     from '../../context/Context';
+import { useWishlist } from '../../context/Context';
+import { categoryService } from '../../services/services';
+import { useDebounce, useClickOutside } from '../../hooks';
 
-const Navbar = () => {
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [search, setSearch] = useState('')
-  const [categories, setCategories] = useState([])
-  const { isAuthenticated, user, logout } = useAuth()
-  const { itemsCount } = useCart()
-  const { itemsCount: wishCount } = useWishlist()
-  const navigate = useNavigate()
+export default function Navbar() {
+  const { isAuthenticated, logout } = useAuth();
+  const { itemsCount } = useCart();
+  const { items: wishlistItems } = useWishlist();
+  const navigate = useNavigate();
+
+  const [searchQuery,    setSearchQuery]    = useState('');
+  const [mobileOpen,     setMobileOpen]     = useState(false);
+  const [userMenuOpen,   setUserMenuOpen]   = useState(false);
+  const [catsOpen,       setCatsOpen]       = useState(false);
+  const [categories,     setCategories]     = useState([]);
+  const [mobileSearch,   setMobileSearch]   = useState(false);
+
+  const userRef = useClickOutside(() => setUserMenuOpen(false));
+  const catsRef = useClickOutside(() => setCatsOpen(false));
+
+  const debouncedSearch = useDebounce(searchQuery, 0);
 
   useEffect(() => {
-    categoryService.getAll().then(res => setCategories(res.data || [])).catch(() => {})
-  }, [])
+    categoryService.getAll().then(r => setCategories(r.data || [])).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (mobileOpen) document.body.style.overflow = 'hidden';
+    else            document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   const handleSearch = (e) => {
-    e.preventDefault()
-    if (search.trim()) {
-      navigate(`/search?q=${encodeURIComponent(search)}`)
-      setSearch('')
-      setSearchOpen(false)
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      setMobileSearch(false);
     }
-  }
+  };
+
+  const displayCats = categories.slice(0, 6);
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="navbar">
       {/* Top bar */}
-      <div className="bg-[#ee7203] text-white py-2">
-        <div className="container text-sm flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a href="tel:+919911820202" className="flex items-center gap-1 hover:opacity-80">
-              <FiPhone /> +91-9911820202
-            </a>
-            <span className="hidden md:inline">| Mon-Sat, 11am-7pm</span>
-          </div>
-          <span className="hidden sm:block font-semibold">FREE SHIPPING ALL OVER INDIA</span>
+      <div className="navbar-top">
+        <div className="container">
+          <span>Free Shipping on orders above ₹500 | Call: +91-XXXXXXXXXX</span>
         </div>
       </div>
 
-      {/* Main header */}
-      <div className="container flex items-center justify-between py-4 gap-4">
-        <Link to="/" className="text-2xl font-bold text-[#ee7203] whitespace-nowrap">RNV Sports</Link>
+      {/* Main bar */}
+      <div className="navbar-main">
+        <div className="container">
+          <div className="navbar-inner">
+            {/* Hamburger */}
+            <button
+              className="navbar-icon-btn"
+              style={{ display: 'none' }}
+              id="mobile-menu-btn"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <FiMenu size={22} />
+            </button>
 
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-4">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="w-full px-4 py-2 border rounded-l-lg focus:outline-none focus:border-[#ee7203]"
-          />
-          <button type="submit" className="px-4 py-2 bg-[#ee7203] text-white rounded-r-lg hover:bg-orange-600 transition-colors">
-            <FiSearch />
-          </button>
-        </form>
+            {/* Logo */}
+            <Link to="/" className="navbar-logo">
+              <span>RNV<em>Sports</em></span>
+            </Link>
 
-        <div className="flex items-center gap-3">
-          <button className="md:hidden p-2" onClick={() => setSearchOpen(!searchOpen)}>
-            <FiSearch />
-          </button>
-          <Link to="/wishlist" className="relative p-2 hover:text-[#ee7203] transition-colors">
-            <FiHeart className="text-xl" />
-            {wishCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ee7203] text-white text-xs rounded-full flex items-center justify-center">{wishCount}</span>
-            )}
-          </Link>
-          <Link to="/cart" className="relative p-2 hover:text-[#ee7203] transition-colors">
-            <FiShoppingCart className="text-xl" />
-            {itemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ee7203] text-white text-xs rounded-full flex items-center justify-center">{itemsCount}</span>
-            )}
-          </Link>
-          {isAuthenticated ? (
-            <div className="relative group">
-              <button className="p-2 hover:text-[#ee7203] transition-colors flex items-center gap-1">
-                <FiUser className="text-xl" />
-                <FiChevronDown className="text-xs" />
+            {/* Search */}
+            <form className="navbar-search" onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Search products…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                aria-label="Search"
+              />
+              <button type="submit" className="navbar-search-btn" aria-label="Search">
+                <FiSearch size={16} />
               </button>
-              <div className="absolute right-0 top-full hidden group-hover:block bg-white border rounded-lg shadow-lg min-w-[150px] z-10">
-                <Link to="/dashboard" className="block px-4 py-2 hover:bg-gray-50 transition-colors">Dashboard</Link>
-                <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors">Sign Out</button>
-              </div>
+            </form>
+
+            {/* Actions */}
+            <div className="navbar-actions">
+              {/* Wishlist */}
+              <Link to="/wishlist" className="navbar-icon-btn" aria-label="Wishlist">
+                <FiHeart size={20} />
+                {wishlistItems.length > 0 && (
+                  <span className="navbar-badge">{wishlistItems.length}</span>
+                )}
+              </Link>
+
+              {/* Cart */}
+              <Link to="/cart" className="navbar-icon-btn" aria-label="Cart">
+                <FiShoppingCart size={20} />
+                {itemsCount > 0 && (
+                  <span className="navbar-badge">{itemsCount}</span>
+                )}
+              </Link>
+
+              {/* User */}
+              {isAuthenticated ? (
+                <div ref={userRef} className="navbar-dropdown" style={{ position: 'relative' }}>
+                  <button
+                    className="navbar-icon-btn"
+                    onClick={() => setUserMenuOpen(p => !p)}
+                    aria-label="Account"
+                  >
+                    <FiUser size={20} />
+                  </button>
+                  {userMenuOpen && (
+                    <div className="navbar-dropdown-menu slide-down">
+                      <Link to="/dashboard" className="navbar-dropdown-item" onClick={() => setUserMenuOpen(false)}>
+                        <FiGrid size={14} style={{ display: 'inline', marginRight: 8 }} />Dashboard
+                      </Link>
+                      <Link to="/dashboard?tab=orders" className="navbar-dropdown-item" onClick={() => setUserMenuOpen(false)}>
+                        <FiPackage size={14} style={{ display: 'inline', marginRight: 8 }} />My Orders
+                      </Link>
+                      <hr style={{ margin: '4px 8px', border: 'none', borderTop: '1px solid #f0f0f0' }} />
+                      <button
+                        className="navbar-dropdown-item"
+                        style={{ width: '100%', textAlign: 'left' }}
+                        onClick={() => { logout(); setUserMenuOpen(false); navigate('/'); }}
+                      >
+                        <FiLogOut size={14} style={{ display: 'inline', marginRight: 8 }} />Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link to="/login" className="btn btn-primary btn-sm">Login</Link>
+              )}
+
+              {/* Mobile hamburger */}
+              <button
+                className="navbar-icon-btn"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open menu"
+                style={{ display: 'none' }}
+                id="hamburger-mobile"
+              >
+                <FiMenu size={22} />
+              </button>
             </div>
-          ) : (
-            <Link to="/login" className="hidden sm:block px-4 py-2 bg-[#ee7203] text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">Login</Link>
-          )}
-          <button className="lg:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
-          </button>
+          </div>
         </div>
       </div>
-
-      {/* Mobile search */}
-      {searchOpen && (
-        <div className="md:hidden border-t">
-          <form onSubmit={handleSearch} className="container py-2 flex">
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="flex-1 px-4 py-2 border rounded-l-lg" />
-            <button type="submit" className="px-4 py-2 bg-[#ee7203] text-white rounded-r-lg"><FiSearch /></button>
-          </form>
-        </div>
-      )}
 
       {/* Desktop nav */}
-      <nav className="hidden lg:block border-t">
+      <nav className="navbar-nav">
         <div className="container">
-          <ul className="flex gap-6">
-            <li><Link to="/" className="block py-3 font-medium hover:text-[#ee7203] transition-colors">Home</Link></li>
-            <li><Link to="/shop" className="block py-3 font-medium hover:text-[#ee7203] transition-colors">Products</Link></li>
-            {categories.slice(0, 5).map(cat => (
-              <li key={cat.category_id}>
-                <Link to={`/category/${cat.category_slug}`} className="block py-3 font-medium hover:text-[#ee7203] transition-colors">{cat.category_name}</Link>
-              </li>
-            ))}
-            <li><Link to="/about" className="block py-3 font-medium hover:text-[#ee7203] transition-colors">About Us</Link></li>
-            <li><Link to="/contact" className="block py-3 font-medium hover:text-[#ee7203] transition-colors">Contact Us</Link></li>
-            {isAuthenticated && <li><Link to="/dashboard" className="block py-3 font-medium hover:text-[#ee7203] transition-colors">Dashboard</Link></li>}
-          </ul>
+          <div className="navbar-nav-inner">
+            <NavLink to="/" end className={({ isActive }) => `navbar-nav-link${isActive ? ' active' : ''}`}>
+              Home
+            </NavLink>
+            <NavLink to="/shop" className={({ isActive }) => `navbar-nav-link${isActive ? ' active' : ''}`}>
+              All Products
+            </NavLink>
+
+            {/* Categories dropdown */}
+            <div ref={catsRef} className="navbar-dropdown">
+              <button
+                className="navbar-nav-link"
+                onClick={() => setCatsOpen(p => !p)}
+              >
+                Categories <FiChevronDown size={14} style={{ transition: 'transform .2s', transform: catsOpen ? 'rotate(180deg)' : 'none' }} />
+              </button>
+              {catsOpen && (
+                <div className="navbar-dropdown-menu slide-down">
+                  {displayCats.map(cat => (
+                    <Link
+                      key={cat.category_id}
+                      to={`/category/${cat.category_slug}`}
+                      className="navbar-dropdown-item"
+                      onClick={() => setCatsOpen(false)}
+                    >
+                      {cat.category_name}
+                    </Link>
+                  ))}
+                  {categories.length === 0 && (
+                    <span className="navbar-dropdown-item" style={{ color: 'var(--color-neutral-400)' }}>Loading…</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <NavLink to="/about" className={({ isActive }) => `navbar-nav-link${isActive ? ' active' : ''}`}>
+              About
+            </NavLink>
+            <NavLink to="/blog" className={({ isActive }) => `navbar-nav-link${isActive ? ' active' : ''}`}>
+              Blog
+            </NavLink>
+            <NavLink to="/contact" className={({ isActive }) => `navbar-nav-link${isActive ? ' active' : ''}`}>
+              Contact
+            </NavLink>
+          </div>
         </div>
       </nav>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="lg:hidden border-t bg-white">
-          <nav className="container py-4">
-            <ul className="space-y-2">
-              <li><Link to="/" onClick={() => setMobileOpen(false)} className="block py-3 font-medium border-b">Home</Link></li>
-              <li><Link to="/shop" onClick={() => setMobileOpen(false)} className="block py-3 font-medium border-b">Products</Link></li>
-              {categories.slice(0, 5).map(cat => (
-                <li key={cat.category_id}>
-                  <Link to={`/category/${cat.category_slug}`} onClick={() => setMobileOpen(false)} className="block py-3 font-medium border-b">{cat.category_name}</Link>
-                </li>
+        <div className="mobile-menu">
+          <div className="mobile-menu-overlay" onClick={() => setMobileOpen(false)} />
+          <div className="mobile-menu-panel">
+            <div className="mobile-menu-header">
+              <span style={{ fontWeight: 800, fontSize: '1.1rem' }}>RNV<em style={{ color: 'var(--color-primary)', fontStyle: 'normal' }}>Sports</em></span>
+              <button onClick={() => setMobileOpen(false)} aria-label="Close">
+                <FiX size={22} />
+              </button>
+            </div>
+
+            {/* Mobile search */}
+            <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--color-neutral-100)' }}>
+              <form onSubmit={(e) => { handleSearch(e); setMobileOpen(false); }}>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="form-input"
+                    type="text"
+                    placeholder="Search products…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </form>
+            </div>
+
+            <nav>
+              {[
+                { to: '/', label: 'Home' },
+                { to: '/shop', label: 'All Products' },
+                { to: '/blog', label: 'Blog' },
+                { to: '/about', label: 'About' },
+                { to: '/contact', label: 'Contact' },
+                { to: '/cart', label: `Cart${itemsCount > 0 ? ` (${itemsCount})` : ''}` },
+                { to: '/wishlist', label: 'Wishlist' },
+              ].map(item => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="mobile-nav-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.label}
+                </Link>
               ))}
-              <li><Link to="/about" onClick={() => setMobileOpen(false)} className="block py-3 font-medium border-b">About Us</Link></li>
-              <li><Link to="/contact" onClick={() => setMobileOpen(false)} className="block py-3 font-medium border-b">Contact Us</Link></li>
-              {!isAuthenticated && <li><Link to="/login" onClick={() => setMobileOpen(false)} className="block py-3 text-[#ee7203] font-semibold">Login / Register</Link></li>}
-            </ul>
-          </nav>
+
+              {displayCats.map(cat => (
+                <Link
+                  key={cat.category_id}
+                  to={`/category/${cat.category_slug}`}
+                  className="mobile-nav-link"
+                  style={{ paddingLeft: '2rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)' }}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  — {cat.category_name}
+                </Link>
+              ))}
+
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                  <button
+                    className="mobile-nav-link"
+                    style={{ width: '100%', textAlign: 'left', color: 'var(--color-error)' }}
+                    onClick={() => { logout(); setMobileOpen(false); navigate('/'); }}
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link to="/login" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Login / Register</Link>
+              )}
+            </nav>
+          </div>
         </div>
       )}
-    </header>
-  )
-}
 
-export default Navbar
+      <style>{`
+        @media (max-width: 768px) {
+          .navbar-search { display: none; }
+          #hamburger-mobile { display: flex !important; }
+          .navbar-inner { gap: 0.5rem; }
+        }
+      `}</style>
+    </header>
+  );
+}

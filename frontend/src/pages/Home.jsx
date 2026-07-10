@@ -1,19 +1,28 @@
-import SEO from '../components/common/SEO'
-import { HeroSlider, ProductSection } from '../components/home/HeroSlider'
-import { CategorySection, BrandSection, FeaturesSection } from '../components/home/Sections'
-import { productService } from '../services/services'
+import React, { useCallback } from 'react';
+import SEO from '../components/common/SEO';
+import { HeroSlider, ProductSection } from '../components/home/HeroSlider';
+import { FeaturesSection, CategorySection, BrandSection, PromoSection } from '../components/home/Sections';
+import { productService } from '../services/services';
 
-const Home = () => (
-  <>
-    <SEO title="Home" description="RNV Sports - Premium Sports & Gym Equipment Supplier in India" />
-    <HeroSlider />
-    <FeaturesSection />
-    <ProductSection title="Hot Selling" fetchFn={() => productService.getHotSelling()} />
-    <CategorySection />
-    <ProductSection title="Featured Products" fetchFn={() => productService.getFeatured()} />
-    <ProductSection title="New Arrivals" fetchFn={() => productService.getNewArrivals()} />
-    <BrandSection />
-  </>
-)
+export default function Home() {
+  const fetchHot      = useCallback(() => productService.getHotSelling(8),  []);
+  const fetchFeatured = useCallback(() => productService.getFeatured(8),     []);
+  const fetchNew      = useCallback(() => productService.getNewArrivals(8),  []);
 
-export default Home
+  return (
+    <>
+      <SEO
+        title="Home"
+        description="RNV Sports — Premium sports and gym equipment. Shop ankle supports, knee braces, gym gear and more."
+      />
+      <HeroSlider />
+      <FeaturesSection />
+      <ProductSection title="Hot Selling"  fetchFn={fetchHot}      viewAllLink="/shop?sort=price_asc" />
+      <CategorySection />
+      <ProductSection title="Featured Products" fetchFn={fetchFeatured} viewAllLink="/shop" />
+      <PromoSection />
+      <ProductSection title="New Arrivals" fetchFn={fetchNew}      viewAllLink="/shop?sort=newest" />
+      <BrandSection />
+    </>
+  );
+}

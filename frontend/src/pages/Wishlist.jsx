@@ -1,83 +1,114 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi'
-import SEO from '../components/common/SEO'
-import EmptyState from '../components/common/EmptyState'
-import LoadingSpinner from '../components/common/LoadingSpinner'
-import { useWishlist, useCart, useAuth } from '../context/Context'
-import { formatPrice, getImageUrl } from '../utils'
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiHeart, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
+import EmptyState from '../components/common/EmptyState';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useWishlist } from '../context/Context';
+import { useCart }     from '../context/Context';
+import { useAuth }     from '../context/Context';
+import { formatPrice, getImageUrl } from '../utils';
 
-const Wishlist = () => {
-  const { items, loading, removeItem } = useWishlist()
-  const { addItem } = useCart()
-  const { isAuthenticated } = useAuth()
-  const navigate = useNavigate()
+export default function Wishlist() {
+  const { isAuthenticated } = useAuth();
+  const { items, loading, removeItem } = useWishlist();
+  const { addItem: addToCart } = useCart();
+  const navigate = useNavigate();
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <SEO title="Wishlist" />
-        <EmptyState icon={FiHeart} title="Please Login" description="Login to view your wishlist items" action={() => navigate('/login?redirect=/wishlist')} actionLabel="Login Now" />
-      </>
-    )
-  }
+  const handleMoveToCart = async (item) => {
+    await addToCart({ product_id: item.product_id, product_qty: 1, cart_price: item.sale_price });
+    await removeItem(item.wishlist_id);
+  };
 
-  if (loading) return <LoadingSpinner className="min-h-[60vh]" />
+  if (!isAuthenticated) return (
+    <>
+      <SEO title="Wishlist" />
+      <EmptyState
+        icon={FiHeart}
+        title="Sign in to view your wishlist"
+        description="Save your favorite products and access them anytime."
+        actionLabel="Sign In"
+        actionTo="/login?redirect=/wishlist"
+      />
+    </>
+  );
 
-  const handleAddToCart = async (item) => {
-    const price = item.product?.sale_price || item.product?.regular_price
-    await addItem(item.product_id, 1, price)
-    await removeItem(item.id)
-  }
+  if (loading) return <LoadingSpinner centered />;
 
   return (
     <>
-      <SEO title="Wishlist" />
-      <div className="bg-gray-100 py-4"><div className="container text-gray-600">Wishlist</div></div>
-
-      <section className="py-12 bg-white">
+      <SEO title="My Wishlist" />
+      <div className="page-header">
         <div className="container">
-          <h1 className="text-3xl font-bold mb-8">My Wishlist ({items.length})</h1>
-          {items.length === 0 ? (
-            <EmptyState icon={FiHeart} title="Your wishlist is empty" description="Save items you love to your wishlist" action={() => navigate('/shop')} actionLabel="Start Shopping" />
+          <h1>My Wishlist</h1>
+          <div className="breadcrumb" style={{ justifyContent: 'center' }}>
+            <Link to="/">Home</Link><span className="breadcrumb-sep">/</span><span>Wishlist</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="section-sm">
+        <div className="container">
+          {!items.length ? (
+            <EmptyState
+              icon={FiHeart}
+              title="Your wishlist is empty"
+              description="Add items to your wishlist while shopping."
+              actionLabel="Browse Products"
+              actionTo="/shop"
+            />
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {items.map(item => {
-                const product = item.product
-                if (!product) return null
-                const price = product.sale_price || product.regular_price
-                return (
-                  <div key={item.id} className="bg-white rounded-lg shadow-sm border overflow-hidden group">
-                    <Link to={`/product/${product.product_slug}`} className="block relative">
-                      <div className="aspect-square bg-gray-100">
-                        {product.featured_image ? (
-                          <img src={getImageUrl(product.featured_image)} alt={product.product_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>}
-                      </div>
-                    </Link>
-                    <div className="p-4">
-                      <Link to={`/product/${product.product_slug}`}>
-                        <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 hover:text-[#ee7203]">{product.product_name}</h3>
+            <>
+              <p style={{ color: 'var(--color-neutral-500)', marginBottom: '1.5rem', fontSize: 'var(--font-size-sm)' }}>
+                {items.length} item{items.length !== 1 ? 's' : ''} in wishlist
+              </p>
+              <div className="products-grid">
+                {items.map(item => (
+                  <div key={item.wishlist_id} className="card product-card">
+                    <div className="product-card__image-wrap">
+                      <Link to={`/product/${item.product_slug}`}>
+                        <img
+                          src={getImageUrl(item.featured_image)}
+                          alt={item.product_name}
+                          className="product-card__image"
+                          onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=400'; }}
+                        />
                       </Link>
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-[#ee7203] font-bold text-lg">₹{formatPrice(price)}</span>
-                        {product.regular_price > price && <span className="text-gray-400 line-through text-sm">₹{formatPrice(product.regular_price)}</span>}
+                    </div>
+                    <div className="product-card__body">
+                      <Link to={`/product/${item.product_slug}`}>
+                        <h3 className="product-card__name line-clamp-2">{item.product_name}</h3>
+                      </Link>
+                      <div className="product-card__price-wrap" style={{ marginBottom: '1rem' }}>
+                        <span className="product-card__price">{formatPrice(item.sale_price)}</span>
+                        {item.regular_price > item.sale_price && (
+                          <span className="product-card__price-old">{formatPrice(item.regular_price)}</span>
+                        )}
                       </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleAddToCart(item)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#ee7203] text-white rounded-lg hover:bg-orange-600 transition-colors">
-                          <FiShoppingCart /><span>Add to Cart</span>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          style={{ flex: 1 }}
+                          onClick={() => handleMoveToCart(item)}
+                        >
+                          <FiShoppingCart size={14} /> Add to Cart
                         </button>
-                        <button onClick={() => removeItem(item.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><FiTrash2 /></button>
+                        <button
+                          className="btn btn-ghost btn-sm btn-icon"
+                          onClick={() => removeItem(item.wishlist_id)}
+                          title="Remove"
+                        >
+                          <FiTrash2 size={14} color="var(--color-error)" />
+                        </button>
                       </div>
                     </div>
                   </div>
-                )
-              })}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
-      </section>
+      </div>
     </>
-  )
+  );
 }
-
-export default Wishlist

@@ -1,197 +1,202 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { authService, cartService, wishlistService } from '../services/services'
-import Cookies from 'js-cookie'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authService, userService } from '../services/services';
+import { AUTH_TOKEN_KEY } from '../services/api';
 
-// ===== Auth Context =====
-const AuthContext = createContext(null)
-export const useAuth = () => {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
-}
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+export function AuthProvider({ children }) {
+  const [user,    setUser]    = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await userService.getProfile();
+      setProfile(res.data);
+    } catch {
+      setProfile(null);
+    }
+  }, []);
 
   useEffect(() => {
-    const init = async () => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        try {
-          const res = await authService.getProfile()
-          if (res.success) {
-            setUser({ id: res.data.user_id, email: res.data.customer_email, role: 'customer' })
-            setProfile(res.data)
-          }
-        } catch (e) {
-          localStorage.removeItem('token')
-        }
-      }
-      setLoading(false)
-    }
-    init()
-  }, [])
-
-  const register = async (data) => {
-    const res = await authService.register(data)
-    if (res.success) {
-      localStorage.setItem('token', res.data.token)
-      setUser(res.data.user)
-    }
-    return res
-  }
-
-  const login = async (data) => {
-    const res = await authService.login(data)
-    if (res.success) {
-      localStorage.setItem('token', res.data.token)
-      setUser(res.data.user)
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (token) {
       try {
-        const prof = await authService.getProfile()
-        if (prof.success) setProfile(prof.data)
-      } catch (e) {}
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp * 1000 > Date.now()) {
+          setUser(payload);
+          fetchProfile();
+        } else {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+        }
+      } catch {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
     }
-    return res
-  }
+    setLoading(false);
+  }, [fetchProfile]);
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    setUser(null)
-    setProfile(null)
-  }
+  const register = useCallback(async (data) => {
+    const res = await authService.register(data);
+    const { token, user: u } = res.data;
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    setUser(u);
+    await fetchProfile();
+    return res;
+  }, [fetchProfile]);
 
-  const updateProfileData = async (updates) => {
-    const res = await authService.updateProfile(updates)
-    if (res.success) {
-      const prof = await authService.getProfile()
-      if (prof.success) setProfile(prof.data)
-    }
-    return res
-  }
+  const login = useCallback(async ({ email, password }) => {
+    const res = await authService.login({ email, password });
+    const { token, user: u } = res.data;
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    setUser(u);
+    await fetchProfile();
+    return res;
+  }, [fetchProfile]);
 
-  return (
-    <AuthContext.Provider value={{
-      user, profile, loading,
-      isAuthenticated: !!user,
-      register, login, logout,
-      updateProfile: updateProfileData,
-    }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const logout = useCallback(() => {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    setUser(null);
+    setProfile(null);
+  }, []);
+
+  const updateProfile = useCallback(async (data) => {
+    const res = await userService.updateProfile(data);
+    setProfile(res.data);
+    return res;
+  }, []);
+
+  const value = {
+    user,
+    profile,
+    loading,
+    isAuthenticated: !!user,
+    register,
+    login,
+    logout,
+    updateProfile,
+    refreshProfile: fetchProfile,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// ===== Cart Context =====
-const CartContext = createContext(null)
-export const useCart = () => {
-  const ctx = useContext(CartContext)
-  if (!ctx) throw new Error('useCart must be used within CartProvider')
-  return ctx
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 }
 
-export const CartProvider = ({ children }) => {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+// ─── Cart Context ──────────────────────────────────────────────────────────────
+const CartContext = createContext(null);
+
+import { cartService } from '../services/services';
+
+export function CartProvider({ children }) {
+  const [items,   setItems]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
 
   const loadCart = useCallback(async () => {
     try {
-      setLoading(true)
-      const res = await cartService.getCart()
-      setItems(res.data || [])
-    } catch (e) {
-      setItems([])
+      setLoading(true);
+      const res = await cartService.getCart();
+      setItems(res.data || []);
+    } catch {
+      setItems([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
-  useEffect(() => { loadCart() }, [loadCart])
+  useEffect(() => { loadCart(); }, [loadCart]);
 
-  const subtotal = items.reduce((sum, i) => sum + (i.cart_price * i.product_qty), 0)
-  const itemsCount = items.reduce((sum, i) => sum + i.product_qty, 0)
+  const addItem = useCallback(async (data) => {
+    await cartService.addItem(data);
+    await loadCart();
+  }, [loadCart]);
 
-  const addItem = async (productId, quantity = 1, price, size = null, color = null) => {
-    const res = await cartService.addItem({ productId, quantity, price, size, color })
-    await loadCart()
-    return res
-  }
+  const updateQuantity = useCallback(async (cartId, quantity) => {
+    await cartService.updateItem(cartId, { quantity });
+    await loadCart();
+  }, [loadCart]);
 
-  const updateQuantity = async (cartId, quantity) => {
-    if (quantity <= 0) return removeItem(cartId)
-    await cartService.updateItem(cartId, quantity)
-    await loadCart()
-  }
+  const removeItem = useCallback(async (cartId) => {
+    await cartService.removeItem(cartId);
+    await loadCart();
+  }, [loadCart]);
 
-  const removeItem = async (cartId) => {
-    await cartService.removeItem(cartId)
-    await loadCart()
-  }
+  const clearCart = useCallback(async () => {
+    await cartService.clearCart();
+    setItems([]);
+  }, []);
 
-  const clearCart = async () => {
-    await cartService.clearCart()
-    setItems([])
-  }
+  const subtotal   = items.reduce((sum, i) => sum + Number(i.cart_price || i.sale_price || 0) * Number(i.product_qty || 1), 0);
+  const itemsCount = items.reduce((sum, i) => sum + Number(i.product_qty || 1), 0);
 
   return (
-    <CartContext.Provider value={{
-      items, loading, subtotal, itemsCount,
-      addItem, updateQuantity, removeItem, clearCart, refreshCart: loadCart,
-    }}>
+    <CartContext.Provider value={{ items, loading, subtotal, itemsCount, addItem, updateQuantity, removeItem, clearCart, reload: loadCart }}>
       {children}
     </CartContext.Provider>
-  )
+  );
 }
 
-// ===== Wishlist Context =====
-const WishlistContext = createContext(null)
-export const useWishlist = () => {
-  const ctx = useContext(WishlistContext)
-  if (!ctx) throw new Error('useWishlist must be used within WishlistProvider')
-  return ctx
+export function useCart() {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error('useCart must be used within CartProvider');
+  return ctx;
 }
 
-export const WishlistProvider = ({ children }) => {
-  const { isAuthenticated } = useAuth()
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+// ─── Wishlist Context ──────────────────────────────────────────────────────────
+const WishlistContext = createContext(null);
+
+import { wishlistService } from '../services/services';
+
+export function WishlistProvider({ children }) {
+  const [items,   setItems]   = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const loadWishlist = useCallback(async () => {
-    if (!isAuthenticated) { setItems([]); setLoading(false); return }
+    if (!isAuthenticated) { setItems([]); return; }
     try {
-      setLoading(true)
-      const res = await wishlistService.getWishlist()
-      setItems(res.data || [])
-    } catch (e) {
-      setItems([])
+      setLoading(true);
+      const res = await wishlistService.getWishlist();
+      setItems(res.data || []);
+    } catch {
+      setItems([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
-  useEffect(() => { loadWishlist() }, [loadWishlist])
+  useEffect(() => { loadWishlist(); }, [loadWishlist]);
 
-  const addItem = async (productId, price) => {
-    if (!isAuthenticated) return { success: false, message: 'Please login to add wishlist items' }
-    const res = await wishlistService.addItem({ productId, price })
-    await loadWishlist()
-    return res
-  }
+  const addItem = useCallback(async (productId, price) => {
+    await wishlistService.addItem({ product_id: productId, price });
+    await loadWishlist();
+  }, [loadWishlist]);
 
-  const removeItem = async (id) => {
-    await wishlistService.removeItem(id)
-    await loadWishlist()
-  }
+  const removeItem = useCallback(async (wishlistId) => {
+    await wishlistService.removeItem(wishlistId);
+    await loadWishlist();
+  }, [loadWishlist]);
 
-  const isInWishlist = (productId) => items.some(i => i.product_id === productId)
+  const isInWishlist = useCallback((productId) =>
+    items.some(i => i.product_id === productId), [items]);
+
+  const getWishlistItem = useCallback((productId) =>
+    items.find(i => i.product_id === productId), [items]);
 
   return (
-    <WishlistContext.Provider value={{
-      items, loading, itemsCount: items.length,
-      addItem, removeItem, isInWishlist, refreshWishlist: loadWishlist,
-    }}>
+    <WishlistContext.Provider value={{ items, loading, addItem, removeItem, isInWishlist, getWishlistItem, reload: loadWishlist }}>
       {children}
     </WishlistContext.Provider>
-  )
+  );
+}
+
+export function useWishlist() {
+  const ctx = useContext(WishlistContext);
+  if (!ctx) throw new Error('useWishlist must be used within WishlistProvider');
+  return ctx;
 }

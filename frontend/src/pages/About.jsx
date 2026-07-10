@@ -1,39 +1,106 @@
-import SEO from '../components/common/SEO'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { FiTarget, FiAward, FiUsers, FiCalendar } from 'react-icons/fi';
+import SEO from '../components/common/SEO';
 
-const About = () => (
-  <>
-    <SEO title="About Us" description="About RNV Sports - Premium sports and gym equipment supplier" />
-    <div className="bg-gray-100 py-4"><div className="container text-gray-600">About Us</div></div>
-    <section className="py-16 bg-white">
-      <div className="container">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">About RNV Sports</h1>
-          <div className="flex flex-col md:flex-row gap-8 items-center mb-12">
-            <img src="https://images.unsplash.com/photo-1534438327276-142e2bae6874?w=600&h=400&fit=crop" alt="Gym" className="w-full md:w-1/2 rounded-lg shadow-lg" />
-            <div className="md:w-1/2">
-              <h2 className="text-2xl font-bold mb-4">Managed by Hiralal Surgicals</h2>
-              <p className="text-gray-600 mb-4">RNV Sports is a premier sports and gym equipment business managed by Hiralal Surgicals, based in Delhi, India. Established in 2015, we have been serving fitness enthusiasts, gym owners, and sports professionals with high-quality equipment and accessories.</p>
-              <p className="text-gray-600 mb-4">Our comprehensive range includes dumbbells, weight plates, barbells, benches, cardio equipment, gym accessories, sports goods, and much more. We take pride in offering products that combine quality, durability, and value for money.</p>
-              <p className="text-gray-600">Located in the heart of Delhi, we cater to customers across India through our online platform and physical store.</p>
+export default function About() {
+  const stats = [
+    { icon: FiCalendar, value: '2015', label: 'Founded' },
+    { icon: FiUsers,    value: '10K+', label: 'Happy Customers' },
+    { icon: FiAward,    value: '500+', label: 'Products' },
+    { icon: FiTarget,   value: '100%', label: 'Quality Assured' },
+  ];
+
+  const features = [
+    { icon: FiTarget, title: 'Our Mission',
+      desc: 'To provide every Indian athlete and fitness enthusiast with access to world-class sports and gym equipment at accessible prices.' },
+    { icon: FiAward, title: 'Quality First',
+      desc: 'Every product in our catalogue is carefully selected and tested to meet the highest quality standards.' },
+    { icon: FiUsers, title: 'Customer Focus',
+      desc: 'Our customers are at the heart of everything we do. We offer expert guidance, fast delivery, and hassle-free returns.' },
+    { icon: FiCalendar, title: 'Trusted Since 2015',
+      desc: 'Over a decade of experience helping athletes, physiotherapists, and fitness enthusiasts across India.' },
+  ];
+
+  return (
+    <>
+      <SEO title="About Us" description="Learn about RNV Sports — India's trusted source for premium sports and gym equipment since 2015." />
+
+      <div className="page-header">
+        <div className="container">
+          <h1>About Us</h1>
+          <div className="breadcrumb" style={{ justifyContent: 'center' }}>
+            <Link to="/">Home</Link><span className="breadcrumb-sep">/</span><span>About</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Hero section */}
+      <div className="section">
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3.5rem', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--color-primary)', marginBottom: '.75rem' }}>
+                Our Story
+              </div>
+              <h2 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 800, lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                Premium Sports Equipment for Every Athlete
+              </h2>
+              <p style={{ color: 'var(--color-neutral-600)', lineHeight: 1.8, marginBottom: '1.25rem' }}>
+                Founded in 2015, RNV Sports (by Hiralal Surgicals) started with a simple goal: make professional-grade sports and rehabilitation equipment accessible to every Indian athlete and fitness enthusiast.
+              </p>
+              <p style={{ color: 'var(--color-neutral-600)', lineHeight: 1.8, marginBottom: '2rem' }}>
+                Today, we offer over 500 products including ankle supports, knee braces, gym equipment, physiotherapy aids, and sports accessories from leading brands — delivered across India.
+              </p>
+              <Link to="/shop" className="btn btn-primary btn-lg">Explore Products</Link>
+            </div>
+            <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', aspectRatio: '4/3' }}>
+              <img
+                src="https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=800"
+                alt="RNV Sports"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {[
-              { title: 'Our Mission', desc: 'Provide premium quality sports and gym equipment at competitive prices.' },
-              { title: 'Quality First', desc: 'We source only the best materials and maintain strict quality control.' },
-              { title: 'Customer Focus', desc: 'Our dedicated team is committed to providing exceptional service.' },
-              { title: 'Trusted Since 2015', desc: 'Over 8 years serving the fitness industry with excellence.' }
-            ].map((f, i) => (
-              <div key={i} className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-600">{f.desc}</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ background: 'var(--color-secondary)', color: '#fff', padding: '3rem 0' }}>
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', textAlign: 'center' }}>
+            {stats.map(({ icon: Icon, value, label }) => (
+              <div key={label}>
+                <Icon size={28} color="var(--color-primary)" style={{ marginBottom: '0.5rem' }} />
+                <div style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 800, color: '#fff', marginBottom: '.25rem' }}>{value}</div>
+                <div style={{ fontSize: 'var(--font-size-sm)', color: 'rgba(255,255,255,.7)' }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </section>
-  </>
-)
 
-export default About
+      {/* Feature cards */}
+      <div className="section">
+        <div className="container">
+          <h2 className="section-title section-title-center">Why Choose RNV Sports</h2>
+          <div className="grid-2" style={{ marginTop: '1rem', gap: '1.5rem' }}>
+            {features.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="card" style={{ padding: '1.75rem', display: 'flex', gap: '1.25rem' }}>
+                <div style={{ width: 52, height: 52, background: 'rgba(238,114,3,.1)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={24} color="var(--color-primary)" />
+                </div>
+                <div>
+                  <h3 style={{ fontWeight: 700, marginBottom: '.5rem' }}>{title}</h3>
+                  <p style={{ color: 'var(--color-neutral-600)', fontSize: 'var(--font-size-sm)', lineHeight: 1.75 }}>{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <style>{`@media(max-width:768px){div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}.grid-2{grid-template-columns:1fr!important}div[style*="repeat(4, 1fr)"]{grid-template-columns:repeat(2,1fr)!important}}`}</style>
+    </>
+  );
+}

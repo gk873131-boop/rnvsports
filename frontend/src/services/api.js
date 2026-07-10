@@ -1,47 +1,43 @@
-import axios from 'axios'
-import Cookies from 'js-cookie'
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const CART_COOKIE_KEY = 'rnv_cart_id';
+const AUTH_TOKEN_KEY  = 'rnv_token';
 
 const api = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-})
+  timeout: 15000,
+});
 
-// Request interceptor - attach auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
-    const cartCookie = Cookies.get('cart_cookie')
-    if (cartCookie) config.headers['X-Cart-Cookie'] = cartCookie
-    return config
-  },
-  (error) => Promise.reject(error)
-)
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (token) config.headers.Authorization = `Bearer ${token}`;
 
-// Response interceptor - handle errors
+  const cartCookie = Cookies.get(CART_COOKIE_KEY);
+  if (cartCookie) config.headers['X-Cart-Cookie'] = cartCookie;
+
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => {
-    if (response.headers['x-cart-cookie']) {
-      Cookies.set('cart_cookie', response.headers['x-cart-cookie'], { expires: 30 })
-    }
-    return response.data
+    const cartCookie = response.headers['x-cart-cookie'];
+    if (cartCookie) Cookies.set(CART_COOKIE_KEY, cartCookie, { expires: 30 });
+    return response.data;
   },
   (error) => {
-    if (error.response) {
-      if (error.response.status === 401) {
-        localStorage.removeItem('token')
-      }
-      return Promise.reject({
-        success: false,
-        message: error.response.data?.message || 'Request failed',
-        status: error.response.status,
-      })
+    if (error.response?.status === 401) {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
     }
-    return Promise.reject({ success: false, message: 'Network error' })
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      'Something went wrong';
+    return Promise.reject({ message, status: error.response?.status });
   }
-)
+);
 
-export default api
+export default api;
+export { AUTH_TOKEN_KEY, CART_COOKIE_KEY };
