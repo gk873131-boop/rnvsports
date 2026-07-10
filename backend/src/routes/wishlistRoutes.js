@@ -1,0 +1,9 @@
+const express = require('express');
+const router = express.Router();
+const c = require('../controllers/wishlistController');
+
+router.get('/', c.getWishlist);
+router.post('/', c.addItem);
+router.delete('/:id', c.removeItem);
+
+module.exports = router;
