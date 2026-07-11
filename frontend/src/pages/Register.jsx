@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import { useAuth } from '../context/Context';
 import { validateEmail, validatePhone } from '../utils';
+
+function F({ name, label, required, type = 'text', placeholder, value, onChange, error }) {
+  return (
+    <div className="form-group">
+      <label className="form-label">{label}{required && <span>*</span>}</label>
+      <input className={`form-input${error ? ' error' : ''}`} type={type} value={value} onChange={onChange} placeholder={placeholder} />
+      {error && <p className="form-error">{error}</p>}
+    </div>
+  );
+}
 
 export default function Register() {
   const { register } = useAuth();
@@ -47,14 +57,6 @@ export default function Register() {
     }
   };
 
-  const F = ({ name, label, required, type = 'text', placeholder }) => (
-    <div className="form-group">
-      <label className="form-label">{label}{required && <span>*</span>}</label>
-      <input className={`form-input${errors[name] ? ' error' : ''}`} type={type} value={form[name]} onChange={set(name)} placeholder={placeholder} />
-      {errors[name] && <p className="form-error">{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <>
       <SEO title="Create Account" />
@@ -70,14 +72,14 @@ export default function Register() {
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="grid-2" style={{ marginBottom: '1rem' }}>
-                <F name="firstName" label="First Name" required />
-                <F name="lastName"  label="Last Name"  required />
+                <F name="firstName" label="First Name" required value={form.firstName} onChange={set('firstName')} error={errors.firstName} />
+                <F name="lastName"  label="Last Name"  required value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <F name="email"  label="Email Address" required type="email" placeholder="you@example.com" />
+                <F name="email"  label="Email Address" required type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} error={errors.email} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <F name="mobile" label="Mobile Number" type="tel" placeholder="10-digit mobile" />
+                <F name="mobile" label="Mobile Number" type="tel" placeholder="10-digit mobile" value={form.mobile} onChange={set('mobile')} error={errors.mobile} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label className="form-label">Password <span>*</span></label>

@@ -9,7 +9,7 @@ export default function OrderSuccess() {
   const orderNo = searchParams.get('order') || '';
   const { clearCart } = useCart();
 
-  React.useEffect(() => { clearCart(); }, []);
+  React.useEffect(() => { clearCart(); }, [clearCart]);
 
   return (
     <>

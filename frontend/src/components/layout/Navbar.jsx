@@ -8,7 +8,7 @@ import { useAuth }     from '../../context/Context';
 import { useCart }     from '../../context/Context';
 import { useWishlist } from '../../context/Context';
 import { categoryService } from '../../services/services';
-import { useDebounce, useClickOutside } from '../../hooks';
+import { useClickOutside } from '../../hooks';
 
 export default function Navbar() {
   const { isAuthenticated, logout } = useAuth();
@@ -25,8 +25,6 @@ export default function Navbar() {
 
   const userRef = useClickOutside(() => setUserMenuOpen(false));
   const catsRef = useClickOutside(() => setCatsOpen(false));
-
-  const debouncedSearch = useDebounce(searchQuery, 0);
 
   useEffect(() => {
     categoryService.getAll().then(r => setCategories(r.data || [])).catch(() => {});

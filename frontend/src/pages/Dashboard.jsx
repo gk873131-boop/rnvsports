@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { FiUser, FiPackage, FiSettings, FiLogOut, FiEdit2, FiSave } from 'react-icons/fi';
+import { FiUser, FiPackage, FiSettings, FiLogOut, FiSave } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useAuth } from '../context/Context';
@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [pwdForm, setPwdForm] = useState({ oldPassword: '', newPassword: '', confirm: '' });
   const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdMsg,     setPwdMsg]     = useState({ type: '', text: '' });
+  const profileTimer = useRef(null);
 
   useEffect(() => {
     if (!isAuthenticated) navigate('/login?redirect=/dashboard');
@@ -60,6 +61,8 @@ export default function Dashboard() {
     }
   }, [tab, isAuthenticated]);
 
+  useEffect(() => () => { if (profileTimer.current) clearTimeout(profileTimer.current); }, []);
+
   const setP = (f) => (e) => setProfileForm(p => ({ ...p, [f]: e.target.value }));
 
   const saveProfile = async (e) => {
@@ -74,7 +77,7 @@ export default function Dashboard() {
       setProfileMsg(err.message || 'Update failed');
     } finally {
       setProfileSaving(false);
-      setTimeout(() => setProfileMsg(''), 4000);
+      profileTimer.current = setTimeout(() => setProfileMsg(''), 4000);
     }
   };
 

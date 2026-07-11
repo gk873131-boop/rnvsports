@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authService, userService } from '../services/services';
+import { authService, userService, cartService, wishlistService } from '../services/services';
 import { AUTH_TOKEN_KEY } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -90,8 +90,6 @@ export function useAuth() {
 // ─── Cart Context ──────────────────────────────────────────────────────────────
 const CartContext = createContext(null);
 
-import { cartService } from '../services/services';
-
 export function CartProvider({ children }) {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,8 +147,6 @@ export function useCart() {
 
 // ─── Wishlist Context ──────────────────────────────────────────────────────────
 const WishlistContext = createContext(null);
-
-import { wishlistService } from '../services/services';
 
 export function WishlistProvider({ children }) {
   const [items,   setItems]   = useState([]);

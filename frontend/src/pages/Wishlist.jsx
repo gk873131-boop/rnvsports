@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import EmptyState from '../components/common/EmptyState';
@@ -13,7 +13,6 @@ export default function Wishlist() {
   const { isAuthenticated } = useAuth();
   const { items, loading, removeItem } = useWishlist();
   const { addItem: addToCart } = useCart();
-  const navigate = useNavigate();
 
   const handleMoveToCart = async (item) => {
     await addToCart({ product_id: item.product_id, product_qty: 1, cart_price: item.sale_price });

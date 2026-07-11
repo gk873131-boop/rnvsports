@@ -6,6 +6,23 @@ import { useAuth } from '../context/Context';
 import { orderService } from '../services/services';
 import { formatPrice, getImageUrl, getShippingCost, validateEmail, validatePhone } from '../utils';
 
+function Field({ name, label, required, type = 'text', value, onChange, error, children }) {
+  return (
+    <div className="form-group">
+      <label className="form-label">{label}{required && <span>*</span>}</label>
+      {children || (
+        <input
+          className={`form-input${error ? ' error' : ''}`}
+          type={type}
+          value={value}
+          onChange={onChange}
+        />
+      )}
+      {error && <p className="form-error">{error}</p>}
+    </div>
+  );
+}
+
 const INDIA_STATES = [
   'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana',
   'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur',
@@ -117,21 +134,6 @@ export default function Checkout() {
 
   if (!isAuthenticated || !items.length) return null;
 
-  const Field = ({ name, label, required, type = 'text', children }) => (
-    <div className="form-group">
-      <label className="form-label">{label}{required && <span>*</span>}</label>
-      {children || (
-        <input
-          className={`form-input${errors[name] ? ' error' : ''}`}
-          type={type}
-          value={form[name]}
-          onChange={set(name)}
-        />
-      )}
-      {errors[name] && <p className="form-error">{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <>
       <SEO title="Checkout" />
@@ -156,22 +158,22 @@ export default function Checkout() {
                 <div className="card" style={{ padding: '1.5rem', marginBottom: '1.25rem' }}>
                   <h3 style={{ fontWeight: 700, marginBottom: '1.25rem' }}>Billing Details</h3>
                   <div className="grid-2">
-                    <Field name="firstName" label="First Name" required />
-                    <Field name="lastName"  label="Last Name"  required />
+                    <Field name="firstName" label="First Name" required value={form.firstName} onChange={set('firstName')} error={errors.firstName} />
+                    <Field name="lastName"  label="Last Name"  required value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
                   </div>
                   <div className="grid-2" style={{ marginTop: '1rem' }}>
-                    <Field name="email"  label="Email Address" required type="email" />
-                    <Field name="mobile" label="Mobile Number" required type="tel" />
+                    <Field name="email"  label="Email Address" required type="email" value={form.email} onChange={set('email')} error={errors.email} />
+                    <Field name="mobile" label="Mobile Number" required type="tel" value={form.mobile} onChange={set('mobile')} error={errors.mobile} />
                   </div>
                   <div className="form-group" style={{ marginTop: '1rem' }}>
-                    <Field name="company" label="Company Name" />
+                    <Field name="company" label="Company Name" value={form.company} onChange={set('company')} error={errors.company} />
                   </div>
                   <div className="form-group" style={{ marginTop: '1rem' }}>
-                    <Field name="address" label="Street Address" required />
+                    <Field name="address" label="Street Address" required value={form.address} onChange={set('address')} error={errors.address} />
                   </div>
                   <div className="grid-2" style={{ marginTop: '1rem' }}>
-                    <Field name="city" label="City" required />
-                    <Field name="state" label="State" required>
+                    <Field name="city" label="City" required value={form.city} onChange={set('city')} error={errors.city} />
+                    <Field name="state" label="State" required error={errors.state}>
                       <select className={`form-select${errors.state ? ' error' : ''}`} value={form.state} onChange={set('state')}>
                         <option value="">Select state</option>
                         {INDIA_STATES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -179,8 +181,8 @@ export default function Checkout() {
                     </Field>
                   </div>
                   <div className="grid-2" style={{ marginTop: '1rem' }}>
-                    <Field name="pincode"  label="Pincode"  required />
-                    <Field name="landmark" label="Landmark" />
+                    <Field name="pincode"  label="Pincode"  required value={form.pincode} onChange={set('pincode')} error={errors.pincode} />
+                    <Field name="landmark" label="Landmark" value={form.landmark} onChange={set('landmark')} error={errors.landmark} />
                   </div>
                 </div>
 

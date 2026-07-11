@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  FiShoppingCart, FiHeart, FiShare2, FiTruck,
-  FiShield, FiRefreshCw, FiChevronRight, FiMinus, FiPlus
+  FiShoppingCart, FiHeart, FiTruck,
+  FiShield, FiRefreshCw, FiMinus, FiPlus
 } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import ProductCard from '../components/common/ProductCard';
@@ -15,6 +15,7 @@ import { formatPrice, calculateDiscount, getImageUrl } from '../utils';
 
 export default function ProductDetails() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { addItem: addToCart } = useCart();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist, getWishlistItem } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -34,6 +35,7 @@ export default function ProductDetails() {
   const [tab,       setTab]       = useState('description');
   const [cartMsg,   setCartMsg]   = useState('');
   const [addingCart,setAddingCart]= useState(false);
+  const cartTimer = useRef(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -57,6 +59,8 @@ export default function ProductDetails() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  useEffect(() => () => { if (cartTimer.current) clearTimeout(cartTimer.current); }, []);
+
   const inWishlist = product ? isInWishlist(product.product_id) : false;
 
   const handleAddToCart = async () => {
@@ -73,7 +77,7 @@ export default function ProductDetails() {
         product_color: selColor?.color_name || null,
       });
       setCartMsg('Added to cart!');
-      setTimeout(() => setCartMsg(''), 3000);
+      cartTimer.current = setTimeout(() => setCartMsg(''), 3000);
     } catch (e) {
       setCartMsg(e.message || 'Failed to add to cart');
     } finally {
@@ -82,7 +86,7 @@ export default function ProductDetails() {
   };
 
   const handleWishlist = async () => {
-    if (!isAuthenticated) { window.location.href = '/login'; return; }
+    if (!isAuthenticated) { navigate('/login?redirect=/product/' + slug); return; }
     if (!product) return;
     try {
       if (inWishlist) {

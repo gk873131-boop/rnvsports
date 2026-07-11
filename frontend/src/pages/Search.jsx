@@ -6,7 +6,6 @@ import ProductCard from '../components/common/ProductCard';
 import { ProductCardSkeleton } from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import { productService } from '../services/services';
-import { useDebounce } from '../hooks';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,7 +14,6 @@ export default function Search() {
   const [inputVal, setInputVal] = useState(query);
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(false);
-  const debouncedInput = useDebounce(inputVal, 400);
 
   useEffect(() => {
     if (!query) return;

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
+import { FiX, FiShoppingBag } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import ProductCard from '../components/common/ProductCard';
 import { ProductCardSkeleton } from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import { productService, categoryService, brandService } from '../services/services';
-import { FiShoppingBag } from 'react-icons/fi';
 
 const SORT_OPTIONS = [
   { value: '',           label: 'Default' },
@@ -25,7 +24,6 @@ export default function Shop() {
   const [categories,  setCategories]  = useState([]);
   const [brands,      setBrands]      = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [priceRange,  setPriceRange]  = useState({ min: 0, max: 50000 });
 
   const sort       = searchParams.get('sort')     || '';
   const categoryId = searchParams.get('category') || '';

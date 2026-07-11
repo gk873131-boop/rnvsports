@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { useCart }     from '../../context/Context';
 import { useWishlist } from '../../context/Context';
@@ -10,6 +10,7 @@ export default function ProductCard({ product }) {
   const { addItem: addToCart } = useCart();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist, getWishlistItem } = useWishlist();
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   if (!product) return null;
 
@@ -32,7 +33,7 @@ export default function ProductCard({ product }) {
   const handleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) { window.location.href = '/login'; return; }
+    if (!isAuthenticated) { navigate('/login'); return; }
     try {
       if (inWishlist) {
         const item = getWishlistItem(product_id);
