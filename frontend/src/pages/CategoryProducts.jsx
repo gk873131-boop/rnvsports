@@ -31,22 +31,14 @@ export default function CategoryProducts() {
 
   useEffect(() => {
     setLoading(true);
-    productService.getByCategory
-      ? productService.getAll({ category_slug: slug, sort, page, limit: 12 })
-          .then(r => { setProducts(r.data || []); setPagination(r.pagination); })
-          .catch(() => setProducts([]))
-          .finally(() => setLoading(false))
-      : setLoading(false);
-
-    // Use category_id approach via productService.getAll with category filter
     categoryService.getBySlug(slug).then(catRes => {
       const cat = catRes.data;
-      if (!cat) { setLoading(false); return; }
+      if (!cat) { setProducts([]); setLoading(false); return; }
       productService.getAll({ category_id: cat.category_id, sort, page, limit: 12 })
         .then(r => { setProducts(r.data || []); setPagination(r.pagination); })
         .catch(() => setProducts([]))
         .finally(() => setLoading(false));
-    }).catch(() => setLoading(false));
+    }).catch(() => { setProducts([]); setLoading(false); });
   }, [slug, sort, page]);
 
   return (

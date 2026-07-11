@@ -37,6 +37,7 @@ exports.addPin = asyncHandler(async (req, res) => {
 
 exports.updatePin = asyncHandler(async (req, res) => {
   const { pin_code, shipping_charge } = req.body;
+  if (!pin_code) return fail(res, 'pin_code is required');
   await Pin.update(req.params.id, pin_code, shipping_charge);
   ok(res, null, { message: 'Updated' });
 });

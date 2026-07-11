@@ -95,7 +95,7 @@ export default function BlogDetails() {
                           src={getImageUrl(p.blog_image)}
                           alt={p.blog_name}
                           style={{ width: 64, height: 64, borderRadius: 'var(--radius)', objectFit: 'cover', flexShrink: 0 }}
-                          onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=200'; }}
+                          onError={e => { e.target.src = '/images/placeholder.svg'; }}
                         />
                         <div>
                           <p style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', lineHeight: 1.4, marginBottom: '.25rem' }} className="line-clamp-2">

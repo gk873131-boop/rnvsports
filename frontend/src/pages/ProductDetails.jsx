@@ -149,7 +149,7 @@ export default function ProductDetails() {
                       <img
                         src={getImageUrl(img.image)}
                         alt={`${product.product_name} ${i + 1}`}
-                        onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=200'; }}
+                        onError={e => { e.target.src = '/images/placeholder.svg'; }}
                       />
                     </button>
                   ))}
@@ -159,7 +159,7 @@ export default function ProductDetails() {
                 <img
                   src={mainImage}
                   alt={product.product_name}
-                  onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=600'; }}
+                  onError={e => { e.target.src = '/images/placeholder.svg'; }}
                 />
               </div>
             </div>

@@ -39,8 +39,15 @@ export function validatePincode(pin) {
 }
 
 export function getImageUrl(filename) {
-  if (!filename) return `${BASE_URL}/uploads/placeholder.jpg`;
+  const PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' +
+    '<rect width="400" height="400" fill="#f3f4f6"/>' +
+    '<text x="200" y="200" font-family="sans-serif" font-size="18" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">No Image</text>' +
+    '</svg>'
+  );
+  if (!filename) return PLACEHOLDER;
   if (filename.startsWith('http')) return filename;
+  if (filename.startsWith('data:')) return filename;
   return `${BASE_URL}/uploads/${filename}`;
 }
 

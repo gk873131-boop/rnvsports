@@ -15,7 +15,7 @@ const { asyncHandler, paginate } = require('../middlewares/helpers');
 const { ok, created, fail, notFound, paginated } = require('../utils/response');
 const { getUploadedFilename } = require('../services/uploadService');
 const { slugify, uniqueSlug } = require('../utils/slugify');
-const { query, getOne }  = require('../config/database');
+const { query }           = require('../config/database');
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 exports.getDashboard = asyncHandler(async (req, res) => {
@@ -335,8 +335,7 @@ exports.getPins = asyncHandler(async (req, res) => {
 exports.changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!oldPassword || !newPassword) return fail(res, 'oldPassword and newPassword required');
-  const { Employee: Emp } = require('../models/Employee');
-  const admin = await Emp.findByUserId(req.user.username);
+  const admin = await Employee.findByUserId(req.user.username);
   if (!admin) return notFound(res, 'Admin not found');
   const valid = await bcrypt.compare(oldPassword, admin.password);
   if (!valid) return fail(res, 'Current password is incorrect');

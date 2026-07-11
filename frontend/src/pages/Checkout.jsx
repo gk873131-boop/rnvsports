@@ -203,7 +203,7 @@ export default function Checkout() {
                         src={getImageUrl(item.featured_image)}
                         alt={item.product_name}
                         style={{ width: 52, height: 52, borderRadius: 'var(--radius)', objectFit: 'cover', flexShrink: 0 }}
-                        onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=200'; }}
+                        onError={e => { e.target.src = '/images/placeholder.svg'; }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p className="line-clamp-2" style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600 }}>{item.product_name}</p>

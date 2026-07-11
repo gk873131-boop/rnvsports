@@ -56,7 +56,7 @@ export default function About() {
             </div>
             <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', aspectRatio: '4/3' }}>
               <img
-                src="https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=800"
+                src="/images/about.jpg"
                 alt="RNV Sports"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

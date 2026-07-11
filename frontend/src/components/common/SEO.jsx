@@ -5,7 +5,7 @@ const SITE_NAME = 'RNV Sports';
 export default function SEO({ title, description, image, url, type = 'website' }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Premium Sports & Gym Equipment`;
   const desc = description || 'Shop premium sports and gym equipment at RNV Sports. Find quality products for every athlete.';
-  const ogImage = image || 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=1200';
+  const ogImage = image || '/images/slide1.jpg';
 
   return (
     <Helmet>

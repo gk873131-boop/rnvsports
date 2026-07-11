@@ -40,6 +40,9 @@ exports.callback = asyncHandler(async (req, res) => {
   }
 
   const txnId  = decoded?.data?.merchantTransactionId || '';
+  if (!txnId) {
+    return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/order-failed`);
+  }
   // Extract order_no from transactionId (format: TXN_ORDxxx_timestamp)
   const parts  = txnId.split('_');
   const orderNo = parts.slice(1, -1).join('_');

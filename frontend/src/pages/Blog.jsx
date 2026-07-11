@@ -41,7 +41,7 @@ export default function Blog() {
                     <img
                       src={getImageUrl(blog.blog_image)}
                       alt={blog.blog_name}
-                      onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=600'; }}
+                      onError={e => { e.target.src = '/images/placeholder.svg'; }}
                     />
                   </div>
                   <div className="blog-card__body">

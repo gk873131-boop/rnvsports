@@ -10,19 +10,19 @@ const FALLBACK_SLIDES = [
   {
     id: 1,
     name: 'Premium Sports Equipment',
-    image: 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=1400',
+    image: '/images/slide1.jpg',
     subtitle: 'Train harder. Recover faster. Perform better.',
   },
   {
     id: 2,
     name: 'Professional Gym Gear',
-    image: 'https://images.pexels.com/photos/1552249/pexels-photo-1552249.jpeg?auto=compress&w=1400',
+    image: '/images/slide2.jpg',
     subtitle: 'World-class equipment for serious athletes.',
   },
   {
     id: 3,
     name: 'Sports Supports & Braces',
-    image: 'https://images.pexels.com/photos/4397840/pexels-photo-4397840.jpeg?auto=compress&w=1400',
+    image: '/images/slide3.webp',
     subtitle: 'Protect your joints. Stay in the game.',
   },
 ];

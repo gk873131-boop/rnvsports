@@ -51,7 +51,7 @@ export default function ProductCard({ product }) {
           alt={product_name}
           className="product-card__image"
           loading="lazy"
-          onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=400'; }}
+          onError={e => { e.target.src = '/images/placeholder.svg'; }}
         />
 
         {/* Badges */}

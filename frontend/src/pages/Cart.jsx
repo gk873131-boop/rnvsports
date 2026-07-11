@@ -103,7 +103,7 @@ export default function Cart() {
                                 src={getImageUrl(item.featured_image)}
                                 alt={item.product_name}
                                 className="cart-item-image"
-                                onError={e => { e.target.src = 'https://images.pexels.com/photos/3490363/pexels-photo-3490363.jpeg?auto=compress&w=200'; }}
+                                onError={e => { e.target.src = '/images/placeholder.svg'; }}
                               />
                             </Link>
                             <div>

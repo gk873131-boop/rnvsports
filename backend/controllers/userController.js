@@ -3,7 +3,7 @@ const bcrypt           = require('bcrypt');
 const Customer         = require('../models/Customer');
 const { asyncHandler } = require('../middlewares/helpers');
 const { ok, fail, notFound } = require('../utils/response');
-const { getUploadedFilename, replaceFile } = require('../services/uploadService');
+const { getUploadedFilename } = require('../services/uploadService');
 
 exports.getProfile = asyncHandler(async (req, res) => {
   const user = await Customer.findById(req.user.id);
