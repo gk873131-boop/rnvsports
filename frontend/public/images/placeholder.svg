@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
-  <rect width="400" height="400" fill="#f3f4f6"/>
-  <g fill="#9ca3af">
-    <rect x="160" y="140" width="80" height="60" rx="4"/>
-    <path d="M200 220c-22 0-40 18-40 40v0h80v0c0-22-18-40-40-40z"/>
-  </g>
-  <text x="200" y="300" font-family="sans-serif" font-size="16" fill="#6b7280" text-anchor="middle">RNV Sports</text>
-</svg>

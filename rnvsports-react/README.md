@@ -1,154 +1,100 @@
-# RNV Sports - React E-Commerce Application
+# RNV Sports — E-Commerce Platform
 
-A modern, production-ready e-commerce application built with React, Vite, and Tailwind CSS. Originally converted from a PHP/MySQL application.
-
-## Features
-
-- Home page with hero slider, featured products, categories, and brands
-- Product listing with filtering and pagination
-- Product detail page with image gallery, size/color selection
-- Shopping cart with quantity management
-- Checkout with order summary
-- User authentication (login/register)
-- User dashboard with profile and orders
-- Wishlist functionality
-- Search functionality
-- Responsive design for all devices
-
-## Tech Stack
-
-- **React 19** - UI library
-- **Vite 8** - Build tool
-- **Tailwind CSS 4** - Styling
-- **React Router DOM 7** - Routing
-- **Supabase** - Backend (database, auth)
-- **Framer Motion** - Animations
-- **React Icons** - Icon library
-- **Axios** - HTTP client
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm 9+
-
-### Installation
-
-1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd rnvsports-react
-```
-
-2. Install dependencies
-
-```bash
-npm install
-```
-
-3. Create environment file
-
-```bash
-cp .env.example .env
-```
-
-Update `.env` with your Supabase credentials:
-
-```
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. Start development server
-
-```bash
-npm run dev
-```
-
-5. Build for production
-
-```bash
-npm run build
-```
+A full-stack e-commerce application for sports and gym equipment, built with React 18 + Vite frontend and Node.js + Express backend.
 
 ## Project Structure
 
 ```
-src/
-├── components/
-│   ├── common/          # Shared components (ProductCard, EmptyState, NotFound)
-│   ├── home/            # Home page sections
-│   └── layout/          # Layout components (Navbar, Footer)
-├── context/             # React Context providers
-│   └── Context.jsx      # Auth, Cart, Wishlist contexts
-├── pages/               # Page components
-│   ├── Home.jsx
-│   ├── Shop.jsx
-│   ├── ProductDetails.jsx
-│   ├── Cart.jsx
-│   ├── Checkout.jsx
-│   ├── Login.jsx
-│   ├── Register.jsx
-│   ├── Dashboard.jsx
-│   └── ...
-├── services/            # API services
-│   ├── api.js           # All API functions
-│   └── supabase.js      # Supabase client
-├── App.jsx              # Main app with routes
-├── main.jsx             # Entry point
-└── index.css            # Global styles
+rnvsports-react/
+├── frontend/          # React 18 + Vite + React Router DOM
+├── backend/           # Node.js + Express + MySQL2 + JWT
+└── README.md
 ```
 
-## Available Routes
+## Tech Stack
 
-| Route | Description |
-|-------|-------------|
-| `/` | Home page |
-| `/shop` | Product listing |
-| `/product/:slug` | Product details |
-| `/category/:slug` | Products by category |
-| `/brand/:slug` | Products by brand |
-| `/cart` | Shopping cart |
-| `/checkout` | Checkout page |
-| `/login` | Login page |
-| `/register` | Registration page |
-| `/dashboard` | User dashboard |
-| `/about` | About page |
-| `/contact` | Contact page |
-| `/search` | Search page |
-| `/privacy` | Privacy policy |
-| `/terms` | Terms & conditions |
-| `/return-exchange` | Return policy |
+### Frontend
+- React 18 with Vite 5
+- React Router DOM 6 (lazy-loaded routes)
+- Axios with auth + cart cookie interceptors
+- React Helmet Async for SEO
+- Context API for state management (Auth, Cart, Wishlist)
+- React Icons
 
-## Database Schema (Supabase)
+### Backend
+- Node.js + Express 4
+- MySQL2 with connection pooling
+- JWT authentication with bcrypt password hashing
+- Multer file uploads
+- Helmet + CORS + rate limiting
+- PhonePe payment gateway integration
+- Cookie-based guest cart system
+- Soft-delete pattern across all tables
 
-The application uses Supabase with the following tables:
+## Getting Started
 
-- `products` - Product catalog
-- `categories` - Product categories
-- `brands` - Product brands
-- `product_gallery` - Product images
-- `product_sizes` - Size variants
-- `product_colors` - Color variants
-- `customers` - User profiles
-- `cart` - Shopping cart items
-- `wishlist` - Wishlist items
-- `orders` - Customer orders
-- `order_items` - Order line items
-- `promos` - Promotional codes
-- `banners` - Homepage banners
-- `blogs` - Blog posts
-- `reviews` - Product reviews
-- `enquiries` - Contact form submissions
-- `newsletters` - Newsletter subscribers
-- `site_settings` - Site configuration
+### Prerequisites
+- Node.js >= 18
+- MySQL database
+
+### Backend Setup
+```bash
+cd rnvsports-react/backend
+npm install
+cp .env.example .env    # Edit database credentials
+npm start
+```
+
+The API runs on `http://localhost:5000/api`.
+
+### Frontend Setup
+```bash
+cd rnvsports-react/frontend
+npm install
+npm run dev
+```
+
+The dev server runs on `http://localhost:5173` and proxies `/api` and `/uploads` to the backend.
+
+### Production Build
+```bash
+cd rnvsports-react/frontend
+npm run build
+```
+
+## Features
+- Product catalog with categories, brands, and search
+- Product details with image gallery, size selection, reviews
+- Shopping cart (guest + authenticated)
+- Wishlist
+- Checkout with PhonePe payment integration
+- User dashboard with order history and profile management
+- Blog with article details
+- Admin panel with full CRUD for products, categories, brands, blogs, banners, orders, and more
+- Responsive design across all viewport sizes
+- SEO optimization with meta tags and structured data
+
+## API Endpoints
+The backend exposes 80+ RESTful endpoints across 19 route groups:
+- `/api/auth` — Register, login, admin login
+- `/api/users` — Profile, password change
+- `/api/products` — List, details, featured, search, price range
+- `/api/categories` — List, by slug
+- `/api/brands` — List, by slug
+- `/api/cart` — Add, update, remove, clear (guest + auth)
+- `/api/wishlist` — Add, remove, list
+- `/api/orders` — Create, list, details
+- `/api/blogs` — List, details, recent
+- `/api/banners` — Home banners, videos, gallery
+- `/api/reviews` — Product reviews
+- `/api/promos` — Promo codes, validation
+- `/api/offers` — Offers CRUD
+- `/api/enquiries` — Contact and product enquiries
+- `/api/newsletter` — Email subscription
+- `/api/search` — Full-text search, autocomplete
+- `/api/settings` — Site settings, pin codes, colors, prices
+- `/api/payment` — PhonePe initiate, callback, status
+- `/api/admin` — Admin dashboard, full CRUD for all entities
 
 ## License
-
-This project is proprietary software for RNV Sports.
-
-## Support
-
-For support, contact: info@rnvsports.com
+Proprietary. RNV Sports.
